@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ชีวิตเมืองเล็ก</title>
+<style>
+:root{--bg:#f3efe6;--fg:#2b2a27;--card:#fffdf8;--ac:#6b8f71;--ln:#d8d2c4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f2321;--fg:#e8e4da;--card:#2a2f2c;--ac:#8fb596;--ln:#3b423e}}
+:root[data-theme="dark"]{--bg:#1f2321;--fg:#e8e4da;--card:#2a2f2c;--ac:#8fb596;--ln:#3b423e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,"Noto Sans Thai",sans-serif;display:flex;justify-content:center}
+#app{width:100%;max-width:680px;padding:10px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:12px;margin-bottom:8px}
+input,button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:8px 10px}
+button{cursor:pointer;background:var(--ac);color:#fff;border:0}button:disabled{opacity:.4}
+#start input{width:100%;margin:4px 0 10px}
+.cols{display:flex;gap:8px;margin:6px 0 12px}.cols i{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent}.cols i.on{border-color:var(--fg)}
+#hud{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 12px;font-size:13px}
+.bar{height:7px;background:var(--ln);border-radius:4px;overflow:hidden}.bar b{display:block;height:100%;background:var(--ac)}
+canvas{width:100%;display:block;border-radius:12px;border:1px solid var(--ln);touch-action:none}
+#acts{display:flex;flex-wrap:wrap;gap:6px;min-height:40px}
+#toast{font-size:13px;min-height:18px;opacity:.8}
+.row{display:flex;gap:6px}.row input{flex:1;min-width:0}
+#sum{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);overflow:auto;padding:12px;flex-direction:column;align-items:center;display:flex}#sum[hidden],#stk[hidden]{display:none}#stk{position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.55);overflow:auto;padding:12px;flex-direction:column;align-items:center;display:flex}#stk .card{width:100%;max-width:460px;margin-bottom:8px}#stk .st{display:grid;grid-template-columns:1fr auto;gap:4px;padding:6px 0;border-bottom:1px solid var(--ln);font-size:13px}#stk .b{grid-column:1/3;display:flex;gap:4px;flex-wrap:wrap}#stk button{padding:5px 8px;font-size:12px}.up{color:#2e9b5a}.dn{color:#d9534f}
+#stk{padding:8px}#stk .w{display:grid;grid-template-columns:1fr;gap:8px;width:100%;max-width:980px}#stk .w .card{max-width:none;margin:0 0 8px}
+#stk .it{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--ln);border-radius:10px;margin-bottom:6px;background:var(--card);cursor:pointer}#stk .it.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac) inset}
+#stk .sm{font-size:12px;opacity:.8}#stk .hd{font-size:15px}#stk .px{font-size:26px;font-weight:700;margin:2px 0}#stk .pos{font-size:13px;margin-top:6px}
+#stk .tb{display:grid;grid-template-columns:1fr 1fr;gap:10px}#stk .g small{display:block;font-size:11px;opacity:.75;margin:2px 0 6px}#stk .bt{display:flex;flex-wrap:wrap;gap:5px}#stk .bt button{padding:9px 12px;font-size:13px;border-radius:9px;flex:1 1 40%}
+#stk .gb{background:#2e9b5a}#stk .rb{background:#d9534f}#stk .ob{background:var(--ln);color:var(--fg)}
+#stk .l,#stk .rr{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#devb{background:#1d1f1e;color:#fff;border:2px solid #d9a441;border-radius:10px;padding:6px 10px;font-size:12px;text-align:center}
+#side{display:contents}#game:not([hidden]){display:flex;flex-direction:column}#game>canvas{order:2}#side>.card:nth-child(1),#side>#devb{order:1}#side>.card:nth-child(3){order:3}#side>.row{order:4}#side>#who{order:5}#devb[hidden]{display:none}
+#cmp{position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.55);overflow:auto;padding:8px;flex-direction:column;align-items:center;display:flex;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#cmp[hidden]{display:none}#cmp .w{display:grid;grid-template-columns:1fr;gap:8px;width:100%;max-width:980px}#cmp .card{margin:0 0 8px}#cmp .sm{font-size:12px;opacity:.85;margin:2px 0}#cmp .px{font-size:22px;font-weight:700;margin:2px 0}#cmp button{padding:9px 12px;font-size:13px;border-radius:9px}#cmp .gb{background:#2e9b5a}#cmp .rb{background:#d9534f}#cmp .ob{background:var(--ln);color:var(--fg)}#cmp .bt{flex-wrap:wrap}#cmp .sp{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}#cmp .sp button{flex:1 1 28%}#cmp .bt{display:flex;gap:6px;margin-top:6px}
+@media (orientation:landscape){#cmp .w{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){#stk .tb{grid-template-columns:1fr}}
+@media (orientation:landscape){#stk .w{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}#stk .l,#stk .rr{max-height:calc(100vh - 62px);overflow:auto}#sum{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:8px}#sum .card{max-width:440px;flex:1 1 300px}}#sum .card{width:100%;max-width:420px;margin-bottom:8px}#sum .big{font-size:26px;font-weight:700}#sum .r{padding:3px 0}
+select{font:inherit;width:100%;margin:4px 0 10px;padding:8px;border-radius:8px;border:1px solid var(--ln);background:var(--card);color:var(--fg)}
+body.fs #app{padding:0}
+html,body{height:100%}body{overflow-x:hidden;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}button{touch-action:manipulation}input,select{font-size:16px}
+:root{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}.row{flex-wrap:wrap}.row input{flex:1 1 140px}.row button{flex:0 0 auto}
+#pn{position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.55);overflow:auto;padding:8px;flex-direction:column;align-items:center;display:flex}#pn[hidden]{display:none}#pn .tp{display:flex;gap:6px;align-items:center;width:100%;max-width:900px;margin-bottom:6px;flex-wrap:wrap}#pn .mt{display:flex;gap:4px;flex:1 1 auto;overflow-x:auto}#pn button{padding:8px 10px;font-size:12px;border-radius:8px;white-space:nowrap}#pn .gb{background:#2e9b5a}#pn .rb{background:#d9534f}#pn .ob{background:var(--ln);color:var(--fg)}#pn .on{outline:2px solid var(--fg)}#pn .w{display:grid;grid-template-columns:1fr;gap:8px;width:100%;max-width:900px}#pn .card{margin:0}#pn .sm{font-size:12px;opacity:.85}#pn .bar{margin:2px 0}#pn input{padding:6px;width:100%;margin:4px 0}
+@media (orientation:landscape){#pn .w{grid-template-columns:1fr 1fr}}
+@supports (height:100dvh){@media (orientation:landscape) and (max-height:560px){#app #game:not([hidden]){height:calc(100dvh - 12px)}#app #game>canvas{width:min(calc(100vw - 282px),calc((100dvh - 14px)*1.6))}}@media (orientation:landscape){#stk .w,#wd .w2{height:calc(100dvh - 56px)}}}
+#cmp .tp{display:flex;gap:6px;align-items:center;width:100%;max-width:980px;margin-bottom:6px;flex-wrap:wrap}#cmp .mt{display:flex;gap:4px;flex:1 1 auto;overflow-x:auto}#cmp .mt button{padding:6px 10px;font-size:12px;white-space:nowrap}#cmp .on{outline:2px solid var(--fg)}
+#wd{position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.55);overflow:auto;padding:8px;flex-direction:column;align-items:center;display:flex}#wd[hidden]{display:none}#wd .tp{display:flex;gap:6px;align-items:center;width:100%;max-width:900px;margin-bottom:6px;flex-wrap:wrap}#wd .mt{display:flex;gap:4px;flex:1 1 auto;overflow-x:auto}#wd button{padding:8px 10px;font-size:12px;border-radius:8px;white-space:nowrap}#wd .gb{background:#2e9b5a}#wd .rb{background:#d9534f}#wd .ob{background:var(--ln);color:var(--fg)}#wd .on{outline:2px solid var(--fg)}#wd .sm{font-size:12px;opacity:.85;color:#fff}#wd .ls .sm{color:var(--fg)}
+#wd .w2{display:grid;grid-template-columns:1fr;gap:8px;width:100%;max-width:900px}#wd .pv,#wd .ls{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:8px}#wd .pv{text-align:center;color:var(--fg)}#wd canvas{width:150px;height:190px;border-radius:10px}#wd .cats{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}#wd .wi{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 4px;border-bottom:1px solid var(--ln);font-size:13px;cursor:pointer}#wd .wi.on{background:rgba(120,160,120,.18)}
+@media (orientation:landscape){#wd .w2{grid-template-columns:190px 1fr;height:calc(100vh - 56px)}#wd .ls{overflow:auto}}
+#stk{padding:6px;justify-content:flex-start}#stk .tp{display:flex;gap:6px;align-items:center;width:100%;max-width:980px;margin-bottom:6px;flex-wrap:wrap}#stk .tp .mt{display:flex;gap:4px;flex:1 1 auto;overflow-x:auto}#stk .tp button{padding:7px 10px;font-size:12px;border-radius:8px;white-space:nowrap}#stk .tp .on{outline:2px solid var(--fg)}
+#stk .tabs{display:flex;gap:4px;margin-bottom:6px}#stk .tabs button{flex:1;padding:7px;font-size:12px;border-radius:8px}#stk .w .card{padding:8px}#stk .th{display:flex;justify-content:space-between;align-items:center;gap:8px}#stk .th .px{font-size:20px;margin:0}#stk .pos{font-size:12px}#stk .bt button{padding:8px 6px;font-size:12px;flex:1 1 30%}#stk .rr{order:-1}
+@media (orientation:landscape){#stk .rr{order:0}#stk .w{height:calc(100vh - 56px);grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}#stk .l,#stk .rr{max-height:none;height:100%;overflow:auto}}
+@media (orientation:landscape) and (max-height:560px){#game>.row{flex-wrap:wrap}#game>.row input{flex:1 1 100%}#game>.row button{flex:1}#game>.card:nth-child(3){max-height:calc(100vh - 230px);overflow:auto}#hud{font-size:12px;gap:2px}.bar{height:6px}}
+@media (orientation:landscape) and (max-height:560px){#app #game{grid-template-rows:auto minmax(0,1fr) auto auto}#app #game>canvas{grid-row:1/5}#app #game>.card:nth-child(1){grid-row:1}#app #game>.card:nth-child(3){grid-row:2;max-height:none;min-height:0;overflow:auto}#app #game>.row{grid-row:3}#app #game>#who{grid-row:4}}
+@media (orientation:landscape) and (max-height:560px){#app #game:not([hidden]){display:flex;flex-direction:row;align-items:stretch;gap:6px;height:calc(100vh - 12px);overflow:hidden}#app #game>canvas{order:0;flex:none;width:min(calc(100vw - 282px),calc((100vh - 14px)*1.6));height:auto;aspect-ratio:8/5;max-width:none;max-height:none;align-self:center}#app #side{display:flex;flex-direction:column;gap:6px;order:1;flex:1 1 0;min-width:190px;max-width:360px;min-height:0}#app #side>*{margin:0}#app #side>.card:nth-child(3){flex:1 1 0;min-height:0;overflow:auto}#app #side .row{flex-wrap:wrap}#app #side .row input{flex:1 1 100%}#app #side .row button{flex:1}}
+@media (orientation:landscape) and (max-height:560px){#app{max-width:none;padding:6px}#game{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:6px;align-items:start;height:calc(100vh - 12px);overflow:hidden}#game>canvas{grid-column:1;grid-row:1/6;max-height:calc(100vh - 14px);max-width:100%;width:auto;height:auto;align-self:center;justify-self:center}#game>:not(canvas){grid-column:2;margin:0}#hud{grid-template-columns:1fr}.card{padding:8px}}
+</style></head><body><div id="app">
+<div id="start" class="card">
+<h2 style="margin:0 0 6px">🏡 ชีวิตเมืองเล็ก</h2>
+<div style="font-size:13px;opacity:.8">ใช้ชีวิต 150 วันในเมืองเล็ก ๆ ทำงาน กิน พักผ่อน เก็บเงิน รักษาใจให้ดี (10 นาทีต่อวัน เซฟอัตโนมัติ)</div>
+<div id="slots" style="margin-top:10px"></div>
+<label>ชื่อของคุณ<input id="nm" maxlength="12" placeholder="ตั้งชื่อตัวละคร"></label>
+<label>รหัสห้องเล่นกับเพื่อน (4 หลัก · เว้นว่าง = เล่นคนเดียว)<input id="rm" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="ใส่รหัสจากเพื่อน หรือกดสร้างห้อง"></label>
+<button id="mk" type="button" style="width:100%;margin-bottom:6px">🎲 สร้างห้องใหม่ (สุ่มรหัส 4 หลัก)</button><div id="mkmsg" style="font-size:13px;margin-bottom:8px"></div>
+<label>รหัสผู้พัฒนา (ไม่บังคับ)<input id="dv" type="password" maxlength="20" autocomplete="off"></label>
+<label>อาชีพ<select id="jb"><option value="office">💼 พนักงานออฟฟิศ (฿400/4 ชม. มั่นคง)</option><option value="cafe">☕ บาริสต้า (฿260/3 ชม. เหนื่อยน้อย อารมณ์ดี)</option><option value="free">💻 ฟรีแลนซ์ (฿550/5 ชม. ทำที่บ้าน เหนื่อยหนัก)</option></select></label>
+สีเสื้อ<div class="cols" id="cols"></div>
+<button id="go" style="width:100%">เริ่มเล่น</button>
+</div>
+<div id="game" hidden>
+<canvas id="cv" width="1280" height="800"></canvas>
+<div id="side"><div class="card"><div id="hud"></div></div><div id="devb" hidden></div>
+<div class="card" style="margin-top:8px"><div id="acts"></div><div id="toast"></div></div>
+<div class="row"><input id="chat" maxlength="40" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="พิมพ์คุยกับเพื่อน"><button id="send">ส่ง</button><button id="relb">💞</button><button id="petb">🐾</button><button id="wdb">👕</button><button id="dvb" hidden>📈 หุ้น</button><button id="snd">🔊</button><button id="fs" title="เต็มจอ">⛶</button></div>
+<div id="who" style="font-size:12px;opacity:.7;margin-top:6px"></div></div>
+</div></div>
+<div id="sum" hidden></div><div id="stk" hidden></div><div id="cmp" hidden></div><div id="wd" hidden></div><div id="pn" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>
+/* ห้องเล่นกับเพื่อน (ไม่พึ่ง Claude): ส่งข้อมูลผ่าน MQTT public broker แบบ WebSocket ใช้ได้ทั้ง iOS/Android */
+(function(){
+const BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081'];
+const ME=Math.random().toString(36).slice(2,10);
+function connect(i,ms){return new Promise((res,rej)=>{
+ if(!window.mqtt)return rej(new Error('mqtt not loaded'));
+ let c,done=false;
+ try{c=mqtt.connect(BROKERS[i],{clientId:'lt_'+ME+'_'+i,reconnectPeriod:0,connectTimeout:ms,clean:true,keepalive:30})}catch(e){return rej(e)}
+ const t=setTimeout(()=>{if(!done){done=true;try{c.end(true)}catch(e){}rej(new Error('timeout'))}},ms+500);
+ c.once('connect',()=>{if(!done){done=true;clearTimeout(t);res(c)}});
+ c.once('error',e=>{if(!done){done=true;clearTimeout(t);try{c.end(true)}catch(_){}rej(e)}});
+})}
+async function join(name){
+ let c=null;
+ for(let i=0;i<BROKERS.length&&!c;i++){try{c=await connect(i,6000)}catch(e){}}
+ if(!c)throw new Error('connect failed');
+ c.options.reconnectPeriod=3000;
+ const base='lifetown-v1/'+encodeURIComponent(name)+'/';
+ const peers=new Map();let mine=null,cb=null,last='',lastT=0;
+ const list=()=>[{peer:ME,isMe:true,presence:mine}].concat([...peers.values()]);
+ const fire=()=>{if(cb)try{cb({peers:list()})}catch(e){console.error(e)}};
+ c.subscribe(base+'+');
+ c.on('connect',()=>{c.subscribe(base+'+');lastT=0});
+ c.on('message',(t,m)=>{
+  const id=t.slice(base.length);if(id===ME)return;
+  let d;try{d=JSON.parse(m.toString())}catch(e){return}
+  if(d.bye){if(peers.delete(id))fire();return}
+  const e=peers.get(id);
+  if(e){e.presence=d.p;e.at=Date.now()}else peers.set(id,{peer:id,isMe:false,presence:d.p,at:Date.now()});
+  fire()});
+ setInterval(()=>{let ch=false;const n=Date.now();peers.forEach((v,k)=>{if(n-v.at>7000){peers.delete(k);ch=true}});if(ch)fire()},1000);
+ addEventListener('pagehide',()=>{try{c.publish(base+ME,JSON.stringify({bye:1}),{qos:0},()=>c.end(true))}catch(e){}});
+ return{
+  presence(o){mine=o;const j=JSON.stringify(o),n=Date.now();
+   if(c.connected&&((j!==last&&n-lastT>=200)||n-lastT>=2000)){last=j;lastT=n;c.publish(base+ME,JSON.stringify({p:o}),{qos:0})}
+   return Promise.resolve()},
+  onPeers(f){cb=f;fire()}
+ }}
+window.claude={use:async k=>k==='room'?{join}:null};
+})();
+</script>
+<script>
+const $=id=>document.getElementById(id);
+const COLS=["#c8553d","#3d7ea6","#6b8f71","#d9a441","#8a6bb1"];
+let col=COLS[0],name="ผู้เล่น",R=null,peers=[],ended=false;
+COLS.forEach((c,i)=>{const e=document.createElement("i");e.style.background=c;if(!i)e.className="on";e.onclick=()=>{col=c;[...$("cols").children].forEach(k=>k.className="");e.className="on"};$("cols").appendChild(e)});
+const Z={home:{x:20,y:20,w:170,h:130,n:"บ้าน",c:"#d9c7a8"},office:{x:450,y:20,w:170,h:130,n:"ออฟฟิศ",c:"#b7c4d1"},cafe:{x:20,y:250,w:170,h:130,n:"ร้านอาหาร",c:"#e0b9a0"},park:{x:230,y:130,w:180,h:140,n:"สวน",c:"#b5cfa8"},shop:{x:450,y:250,w:170,h:130,n:"ร้านค้า",c:"#d6c3d6"}};
+const S={d:1,t:6,e:80,h:80,m:70,$:300,x:320,y:60,tx:null,ty:null};
+const cl=v=>Math.max(0,Math.min(100,v));
+function adv(hr){S.t+=hr;S.h=cl(S.h-4*hr);S.e=cl(S.e-3*hr);S.m=cl(S.m-((S.h<20||S.e<20)?3:.8)*hr);if(S.t>=24){toast("หมดสติกลางดึก... ตื่นมาเสียเงินค่าหมอ");S.$=Math.max(0,S.$-50);S.m=cl(S.m-15);newDay(60)}}
+function newDay(e){S.d++;if(S.bk)S.bk=Math.round(S.bk*1.02);S.t=6;S.e=Math.min(100,e+[0,5,10,20][S.hs|0]);S.m=cl(S.m+[0,0,1,2,3][S.car|0]+[0,2,4,8][S.hs|0]);dayHook();if(S.d>150)finish()}
+const ST={earn:0,spend:0,work:0,eat:0,rest:0,talk:0,ms:0,mn:0};
+function ch(o){if(o.$>0)ST.earn+=o.$;if(o.$<0)ST.spend-=o.$;if(o.h===40)ST.eat++;if(o.$==null&&o.e!=null&&o.m>0)ST.rest++;if(o.m===8&&o.e==null&&o.h==null)ST.talk++;for(const k in o)S[k]=k=="$"?Math.max(0,S[k]+o[k]):cl(S[k]+o[k])}
+function open(a,b,f){return()=>{if(S.t<a||S.t>=b)return toast("ตอนนี้ปิดอยู่ (เปิด "+a+":00-"+b+":00)");f()}}
+const ACT={
+home:[["😴 นอน",()=>{ch({m:5,h:-12});newDay(S.t>=21?100:S.e+50);toast("ตื่นเช้าวันใหม่")}],["📺 ดูทีวี 1 ชม.",()=>{ch({m:10,e:-3});adv(1)}]],
+office:[["💼 ทำงาน 4 ชม. (+฿400)",open(8,18,()=>{if(S.e<25)return toast("เหนื่อยเกินไป พักก่อน");ch({$:400,e:-25,m:-5});adv(4)})]],
+cafe:[["🍚 กินข้าว ฿60",()=>{if(S.$<60)return toast("เงินไม่พอ");ch({$:-60,h:40,m:3});adv(1)}]],
+park:[["🌳 พักผ่อน 2 ชม.",()=>{ch({m:15,e:5});adv(2)}],["🏃 วิ่งออกกำลัง 1 ชม.",()=>{if(S.e<20)return toast("ไม่มีแรง");ch({m:8,e:-12,h:-6});adv(1)}]],
+shop:[["🍪 ซื้อขนม ฿30",open(8,22,()=>{if(S.$<30)return toast("เงินไม่พอ");ch({$:-30,h:10,m:5});adv(.3)})],["🎁 ซื้อของขวัญให้ตัวเอง ฿150",open(8,22,()=>{if(S.$<150)return toast("เงินไม่พอ");ch({$:-150,m:25});adv(.5)})]]
+};
+function zoneOf(x,y){for(const k in Z){const z=Z[k];if(x>z.x&&x<z.x+z.w&&y>z.y&&y<z.y+z.h)return k}return null}
+let toastT;function toast(s){$("toast").textContent=s;clearTimeout(toastT);toastT=setTimeout(()=>$("toast").textContent="",4000)}
+function hud(){mkSync();mcall();autoSL();devWatch();applyAssets();companyTick();petTick();const f=(l,v)=>`<div>${l} ${Math.round(v)}<div class="bar"><b style="width:${v}%"></b></div></div>`;
+const hh=Math.floor(S.t),mm=Math.floor((S.t-hh)*60);
+if(document.activeElement!==$('chat'))$("hud").innerHTML=`<div>📅 วันที่ ${Math.min(S.d,150)}/150 · ${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}</div><div>💰 ฿${nf(S.$)}${S.bk?' · 🏦'+nf(S.bk):''}${(S.pf&&Object.keys(S.pf).length)||(S.sh&&Object.keys(S.sh).length)?' · 📈'+nf(Math.round(pfVal())):''}</div>`+f("⚡ พลังงาน",S.e)+f("🍽 อิ่ม",S.h)+f("😊 อารมณ์",S.m)}
+let lastZ="~";
+function acts(){const z=zoneOf(S.x,S.y),near=peers.find(p=>!p.isMe&&Math.hypot(p.presence.x-S.x,p.presence.y-S.y)<70);
+const key=z+"|"+(near&&near.peer)+"|"+ended;if(key==lastZ)return;lastZ=key;const box=$("acts");box.innerHTML="";
+if(ended)return;if(!z)box.textContent="เดินไปที่สถานที่ต่าง ๆ (แตะที่แผนที่ หรือใช้ลูกศร/WASD)";
+(ACT[z]||[]).concat(z==CAR[S.job].z?[[CAR[S.job].a,workF]]:[]).forEach(([t,f])=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>{const t0=S.t+S.d*100,k=/ทำงาน|ชงกาแฟ|ฟรีแลนซ์|เวร|สอนเทรนนิ่ง|ดูแลห้องสมุด|ขายของ|สอนหนังสือ|ดูแลเครื่องเล่น|ดูแลสวน|ออกเรือ|วิเคราะห์หุ้น/.test(t)?'work':/กินข้าว|กินของ/.test(t)?'eat':/พักผ่อน|วิ่ง|ชิล|เล่นน้ำ|อ่านหนังสือ|ออกกำลัง|เดินป่า|ฟุตบอล|ตกปลา|เก็บผลไม้|สปา|เครื่องเล่น/.test(t)?'relax':'';f();hud();if(S.t+S.d*100!==t0){sfx(/นอน/.test(t)?'sleep':k=='work'?'coin':k=='eat'?'eat':'click');if(k)act(k)}};box.appendChild(b)});
+if(near){const b=document.createElement("button");b.textContent="💬 คุยกับ "+(near.presence.n||"เพื่อน");b.onclick=()=>{ch({m:8});adv(.5);toast("คุยกันสนุกมาก +อารมณ์");hud()};box.appendChild(b)}}
+const cv=$("cv"),g=cv.getContext("2d");
+cv.addEventListener("pointerdown",e=>{const r=cv.getBoundingClientRect();S.tx=(e.clientX-r.left)*640/r.width+CAM.x;S.ty=(e.clientY-r.top)*400/r.height+CAM.y});
+const K={};addEventListener("keydown",e=>{if(e.target.tagName!="INPUT")K[e.key.toLowerCase()]=1});addEventListener("keyup",e=>K[e.key.toLowerCase()]=0);
+function person(x,y,c,n,say){g.fillStyle=c;g.beginPath();g.arc(x,y,10,0,7);g.fill();g.fillStyle="#f1d9c0";g.beginPath();g.arc(x,y-13,6,0,7);g.fill();
+g.fillStyle="#2b2a27";g.font="12px system-ui";g.textAlign="center";g.fillText(n,x,y+26);
+if(say){g.fillStyle="#fffdf8";g.fillRect(x-60,y-48,120,18);g.fillStyle="#2b2a27";g.fillText(say.slice(0,22),x,y-35)}}
+function draw(){g.fillStyle="#e9e4d4";g.fillRect(0,0,640,400);g.fillStyle="#d4cdb8";g.fillRect(0,160,640,6);g.fillRect(205,0,6,400);
+for(const k in Z){const z=Z[k];g.fillStyle=z.c;g.fillRect(z.x,z.y,z.w,z.h);g.fillStyle="#2b2a27";g.font="14px system-ui";g.textAlign="center";g.fillText(z.n,z.x+z.w/2,z.y+z.h/2+5)}
+const now=Date.now();peers.forEach(p=>{if(p.isMe||!p.presence||p.presence.x==null)return;const q=p.presence;person(q.x,q.y,q.c||"#888",q.n||"เพื่อน",now-(q.st||0)<6000?q.say:"")});
+person(S.x,S.y,col,name,now-(S.st||0)<6000?S.say:"")}
+const GR=Array.from({length:140},(_,i)=>[(i*97)%640,(i*61+i*i)%400]);
+const ROOF={home:"#a8553f",office:"#4d6a85",cafe:"#b5703f",shop:"#8a5f8a"};
+const DP={};let tick=0,lx=S.x,ly=S.y;
+function rr(x,y,w,h,r,c){g.fillStyle=c;g.beginPath();g.roundRect(x,y,w,h,r);g.fill()}
+function tree(x,y){g.fillStyle="rgba(0,0,0,.15)";g.beginPath();g.ellipse(x,y+10,13,5,0,0,7);g.fill();g.fillStyle="#6b4a32";g.fillRect(x-2,y,4,10);g.fillStyle="#4f7d4a";g.beginPath();g.arc(x,y-4,13,0,7);g.fill();g.fillStyle="#6a9b5c";g.beginPath();g.arc(x-4,y-8,8,0,7);g.fill()}
+function bld(k,lit){const z=Z[k];rr(z.x+5,z.y+7,z.w,z.h,10,"rgba(0,0,0,.15)");rr(z.x,z.y,z.w,z.h,10,z.c);rr(z.x-4,z.y,z.w+8,36,8,ROOF[k]);
+for(let i=0;i<3;i++){rr(z.x+16+i*50,z.y+50,30,26,4,lit?"#f6dc8e":"#d3e6ef");g.fillStyle="rgba(0,0,0,.12)";g.fillRect(z.x+30+i*50,z.y+50,2,26)}
+rr(z.x+z.w/2-13,z.y+z.h-36,26,36,4,"#7a5a42");g.font="bold 13px system-ui";g.textAlign="center";g.fillStyle="#fff";g.fillText(z.n,z.x+z.w/2,z.y+23)}
+function person(x,y,c,n,say,mv){const b=mv?Math.sin(tick/3)*2:0;g.fillStyle="rgba(0,0,0,.2)";g.beginPath();g.ellipse(x,y+9,9,4,0,0,7);g.fill();
+g.fillStyle="#3b3a44";g.fillRect(x-5,y+2,4,8+b/2);g.fillRect(x+1,y+2,4,8-b/2);
+rr(x-7,y-10+b/3,14,15,5,c);g.fillStyle="#f1d3b5";g.beginPath();g.arc(x,y-15+b/3,6.5,0,7);g.fill();g.fillStyle="#4a3a30";g.beginPath();g.arc(x,y-17+b/3,6.5,3.14,6.28);g.fill();
+g.font="bold 11px system-ui";g.textAlign="center";const w=g.measureText(n).width+10;rr(x-w/2,y+14,w,16,8,"rgba(30,30,30,.65)");g.fillStyle="#fff";g.fillText(n,x,y+26);
+if(say){const s=say.slice(0,22),w2=g.measureText(s).width+14;rr(x-w2/2,y-50,w2,20,8,"#fffdf8");g.fillStyle="#2b2a27";g.fillText(s,x,y-36)}}
+function draw(){tick++;g.setTransform(2,0,0,2,0,0);g.fillStyle="#a9c98f";g.fillRect(0,0,640,400);g.fillStyle="#9dbf84";GR.forEach(p=>g.fillRect(p[0],p[1],3,2));
+g.fillStyle="#d2cab4";g.fillRect(0,152,640,28);g.fillRect(197,0,28,400);g.fillStyle="rgba(255,255,255,.55)";for(let i=0;i<640;i+=28)g.fillRect(i,165,14,2);for(let j=0;j<400;j+=28)g.fillRect(210,j,2,14);
+const t=S.t,na=t<7?(7-t)*.2:t>18?Math.min(.5,(t-18)*.08):0,lit=na>.15;
+const pk=Z.park;rr(pk.x,pk.y,pk.w,pk.h,18,"#86b06f");g.fillStyle="#8ec3d6";g.beginPath();g.ellipse(320,205,42,24,0,0,7);g.fill();rr(272,252,60,8,3,"#8a6b4c");g.font="bold 13px system-ui";g.textAlign="center";g.fillStyle="#fff";g.fillText(pk.n,pk.x+pk.w/2,pk.y+22);
+["home","office","cafe","shop"].forEach(k=>bld(k,lit));
+[[245,160],[395,160],[250,250],[392,248],[235,40],[420,60],[300,330],[420,350],[440,200],[230,360]].forEach(p=>tree(p[0],p[1]));
+const zk=zoneOf(S.x,S.y);if(zk){const z=Z[zk];g.strokeStyle="rgba(255,255,255,.9)";g.lineWidth=3;g.beginPath();g.roundRect(z.x-3,z.y-3,z.w+6,z.h+6,12);g.stroke()}
+const now=Date.now(),L=[],mv=Math.hypot(S.x-lx,S.y-ly)>.3;lx=S.x;ly=S.y;
+L.push([S.y,()=>person(S.x,S.y,col,name,now-(S.st||0)<6000?S.say:"",mv)]);
+peers.forEach(p=>{const q=p.presence;if(p.isMe||!q||q.x==null)return;const d=DP[p.peer]||(DP[p.peer]={x:q.x,y:q.y});const m=Math.hypot(q.x-d.x,q.y-d.y)>1.5;d.x+=(q.x-d.x)*.25;d.y+=(q.y-d.y)*.25;L.push([d.y,()=>person(d.x,d.y,q.c||"#888",q.n||"เพื่อน",now-(q.st||0)<6000?q.say:"",m)])});
+L.sort((a,b)=>a[0]-b[0]).forEach(f=>f[1]());
+if(na>0){g.fillStyle="rgba(18,28,70,"+na+")";g.fillRect(0,0,640,400)}}
+function step(){if(ended)return;let dx=0,dy=0;if(K.arrowleft||K.a)dx--;if(K.arrowright||K.d)dx++;if(K.arrowup||K.w)dy--;if(K.arrowdown||K.s)dy++;
+if(dx||dy)S.tx=null;else if(S.tx!=null){const vx=S.tx-S.x,vy=S.ty-S.y,d=Math.hypot(vx,vy);if(d<4*spd())S.tx=null;else{dx=vx/d;dy=vy/d}}
+S.x=Math.max(12,Math.min(2548,S.x+dx*4*spd()));S.y=Math.max(14,Math.min(1150,S.y+dy*4*spd()));if($('stk').hidden)draw();acts()}
+function finish(){ended=true;const sc=Math.round(S.$/10+S.m*3);const r=sc>420?"ชีวิตลงตัวสุด ๆ 🌟":sc>300?"ชีวิตดีเลย 😊":sc>200?"ธรรมดาแต่อบอุ่น 🙂":"ชีวิตยังต้องปรับอีกนิด 🌱";
+$("acts").innerHTML=`<div><b>จบ 10 วันแล้ว!</b> เงิน ฿${S.$} · อารมณ์ ${Math.round(S.m)} · คะแนน ${sc}<br>${r}</div>`;lastZ="~"}
+const MED=['🥇','🥈','🥉'];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function lvl(sc){return sc>600?'ชีวิตลงตัวสุด ๆ 🌟':sc>450?'ชีวิตดีเลย 😊':sc>300?'ธรรมดาแต่อบอุ่น 🙂':'ชีวิตยังต้องปรับอีกนิด 🌱'}
+function finish(){if(ended)return;ended=true;S.$+=(S.bk||0)+liq()+assetVal()+coVal();S.co={};S.bk=0;S.pf={};S.sh={};S.sc=Math.round(S.$/120+S.m*3);S.fm=S.$;S.fo=Math.round(S.m);pub();$('acts').innerHTML='<button id=rs>📋 ดูสรุป</button>';$('rs').onclick=showSum;showSum()}
+function showSum(){const el=$('sum'),am=ST.mn?Math.round(ST.ms/ST.mn):Math.round(S.m);
+let h=`<div class=card><b>📋 สรุปชีวิต 150 วันของ ${esc(name)}</b><div class=big>${S.sc} คะแนน</div><div class=r>${lvl(S.sc)}</div><div class=r>💰 เงินสุดท้าย ฿${nf(S.fm)} (หาได้ ฿${nf(ST.earn)} · ใช้ไป ฿${nf(ST.spend)})</div><div class=r>😊 อารมณ์เฉลี่ย ${am} · ตอนจบ ${S.fo}</div><div class=r>💼 ทำงาน ${ST.work} ครั้ง · 🍚 กินข้าว ${ST.eat} ครั้ง</div><div class=r>🌳 พักผ่อน/ออกกำลัง ${ST.rest} ครั้ง · 💬 คุยกับเพื่อน ${ST.talk} ครั้ง · 🤝 ทำร่วมกัน ${ST.co||0} ครั้ง · 📈 กำไรหุ้น ฿${Math.round(ST.pl||0)}</div></div>`;
+if(R){const ps=[{n:name,me:1,sc:S.sc,fm:S.fm,fo:S.fo,d:150}];peers.forEach(p=>{const q=p.presence;if(!p.isMe&&q&&q.n)ps.push({n:q.n,sc:q.sc||0,fm:q.fm||0,fo:q.fo||0,d:q.d||1})});
+ps.sort((a,b)=>b.sc-a.sc);let rows='',k=0;ps.forEach(p=>{if(p.sc){rows+=`<div class=r>${MED[k]||(k+1)+'.'} ${esc(p.n)}${p.me?' (คุณ)':''} — ${p.sc} คะแนน · ฿${nf(p.fm)} · 😊${p.fo}</div>`;k++}else rows+=`<div class=r style=opacity:.6>⏳ ${esc(p.n)} — กำลังเล่น วันที่ ${p.d}/150</div>`});
+h+=`<div class=card><b>🏆 อันดับในห้อง</b>${rows}</div>`}
+h+='<div class=row style=width:100%;max-width:420px><button id=sx>ปิด</button><button id=sr>เล่นใหม่</button></div>';
+el.innerHTML=h;$('sx').onclick=()=>{el.hidden=true};$('sr').onclick=()=>location.reload();el.hidden=false}
+const CAR={office:{z:'office',a:'💼 ทำงานออฟฟิศ 4 ชม. (+฿400)',h:4,pay:400,e:25,m:5,o:8,c:18},cafe:{z:'cafe',a:'☕ ชงกาแฟ 3 ชม. (+฿260)',h:3,pay:260,e:15,m:-2,o:7,c:20},free:{z:'home',a:'💻 รับงานฟรีแลนซ์ 5 ชม. (+฿550)',h:5,pay:550,e:32,m:8,o:8,c:23}};
+ACT.office=[];ST.co=0;let RES=false,CODE='',AC=null,SND=true,AN=0,LA={k:'',at:0,used:1};const SEEN={};
+function workF(){const c=CAR[S.job];if(S.t<c.o||S.t>=c.c)return toast('ตอนนี้ปิดอยู่ (เปิด '+c.o+':00-'+c.c+':00)');if(S.e<c.e)return toast('เหนื่อยเกินไป พักก่อน');ST.work++;const q=rollPay(),pay=Math.round(c.pay*(1+.1*(S.up||0))*q[0]*(1+payBonus()));ch({$:pay,e:-c.e,m:-c.m+q[2]});toast(q[1]+' ได้ ฿'+pay);adv(c.h)}
+function act(k){LA={k,at:Date.now(),used:0};AN++;pub();coop()}
+function coop(){const now=Date.now();if(LA.used||now-LA.at>20000)return;for(const p of peers){const q=p.presence,s=SEEN[p.peer];if(p.isMe||!q||!s||s.used||s.k!==LA.k||now-s.at>20000||Math.hypot(q.x-S.x,q.y-S.y)>90)continue;s.used=1;LA.used=1;ch(LA.k==='work'?{m:10,$:100}:{m:10});ST.co++;hud();sfx('coop');toast('🤝 '+({work:'ทำงาน',eat:'กินข้าว',relax:'พักผ่อน'})[LA.k]+'ด้วยกันกับ '+(q.n||'เพื่อน')+' ได้โบนัส!');return}}
+function seen(){peers.forEach(p=>{const q=p.presence;if(!p.isMe&&q&&q.an&&(!SEEN[p.peer]||SEEN[p.peer].n!==q.an))SEEN[p.peer]={n:q.an,k:q.ak,at:Date.now(),used:0}});coop()}
+function aud(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
+function tone(f,d,v,ty,at){if(!AC||!SND)return;const o=AC.createOscillator(),g2=AC.createGain(),t=AC.currentTime+(at||0);o.type=ty||'sine';o.frequency.value=f;g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(v,t+.02);g2.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g2);g2.connect(AC.destination);o.start(t);o.stop(t+d+.05)}
+function sfx(k){(({coin:[[880,.1],[1175,.2]],eat:[[330,.1],[392,.12]],sleep:[[392,.3],[330,.3],[262,.5]],coop:[[523,.1],[659,.1],[784,.25]],click:[[600,.06]]})[k]||[]).forEach((n,i)=>tone(n[0],n[1]+.1,.08,'triangle',i*.12))}
+const PE=[262,294,330,392,440,523,588];let mi=2;
+setInterval(()=>{if(!AC||!SND||ended)return;mi=Math.max(0,Math.min(PE.length-1,mi+Math.floor(Math.random()*3)-1));const n=PE[mi]/(S.t>=19||S.t<7?2:1);tone(n,1.6,.035,'sine');if(Math.random()<.3)tone(n*1.5,1.2,.02,'sine',.3)},700);
+$('snd').onclick=()=>{SND=!SND;$('snd').textContent=SND?'🔊':'🔇';aud()};
+function save(){try{if($('game').hidden)return;if(ended){localStorage.removeItem(SKEY(SLOT));return}localStorage.setItem(SKEY(SLOT),JSON.stringify({S:{d:S.d,t:S.t,e:S.e,h:S.h,m:S.m,$:S.$,x:S.x,y:S.y,job:S.job,up:S.up||0,bk:S.bk||0,pf:S.pf||{},sh:S.sh||{},slc:S.slc||{},car:S.car||0,hs:S.hs||0,co:S.co||{},wd:S.wd,av:S.av,pets:S.pets,rel:S.rel,rt:S.rt,ph:S.ph},ST,name,col,code:CODE}))}catch(e){}}
+addEventListener('pagehide',save);
+const SKEY=n=>'lifetown_slot'+n;let SLOT=1;
+function slotGet(n){try{const v=JSON.parse(localStorage.getItem(SKEY(n)));return v&&v.S&&v.S.d<=150?v:null}catch(e){return null}}
+try{if(!localStorage.getItem(SKEY(1))&&localStorage.getItem('lifetown_v1')){localStorage.setItem(SKEY(1),localStorage.getItem('lifetown_v1'));localStorage.removeItem('lifetown_v1')}}catch(e){}
+function slotBtn(t,f){const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=f;return b}
+function renderSlots(){const box=$('slots');box.innerHTML='';
+for(let n=1;n<=3;n++){const v=slotGet(n),row=document.createElement('div');row.className='card';row.style.cssText='display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:6px;'+(n===SLOT?'border:2px solid var(--ac)':'');
+const t=document.createElement('div');t.style.cssText='flex:1;font-size:13px';t.textContent=v?'💾 ช่อง '+n+': '+v.name+' · วันที่ '+v.S.d+'/150 · ฿'+Math.round(v.S.$).toLocaleString('th-TH'):'💾 ช่อง '+n+': ว่าง';row.appendChild(t);
+if(v){row.appendChild(slotBtn('▶ เล่นต่อ',()=>{SLOT=n;Object.assign(S,v.S);Object.assign(ST,v.ST);col=v.col;$('nm').value=v.name;$('rm').value=v.code||'';RES=true;$('go').click()}));
+const d=slotBtn('🗑',()=>{if(confirm('ลบเซฟช่อง '+n+' ?')){try{localStorage.removeItem(SKEY(n))}catch(e){}renderSlots()}});d.style.background='#d9534f';row.appendChild(d)}
+else row.appendChild(slotBtn(n===SLOT?'✔ เลือกแล้ว':'เลือกช่องนี้',()=>{SLOT=n;renderSlots()}));
+box.appendChild(row)}
+const i=document.createElement('div');i.style.cssText='font-size:12px;opacity:.75;margin-bottom:8px';i.textContent='เกมใหม่จะเซฟลงช่อง '+SLOT+(slotGet(SLOT)?' (มีเซฟอยู่ จะถามก่อนเขียนทับ)':'');box.appendChild(i)}
+for(let n=3;n>=1;n--)if(!slotGet(n))SLOT=n;
+renderSlots();
+Object.assign(Z.home,{x:60,y:50,w:170,h:130});Object.assign(Z.office,{x:300,y:50,w:190,h:130});Object.assign(Z.cafe,{x:60,y:270,w:170,h:130});Object.assign(Z.shop,{x:300,y:270,w:170,h:130});Object.assign(Z.park,{x:540,y:260,w:250,h:170});
+Object.assign(Z,{mall:{x:540,y:50,w:200,h:130,n:'ห้างสรรพสินค้า',c:'#d8c0c0'},hospital:{x:790,y:50,w:170,h:130,n:'โรงพยาบาล',c:'#dfe6ea'},gym:{x:1010,y:50,w:190,h:130,n:'ยิม',c:'#c9c9d6'},library:{x:840,y:270,w:180,h:130,n:'ห้องสมุด',c:'#cdbf9f'},beach:{x:60,y:540,w:330,h:200,n:'ชายหาด',c:'#f0dfae'},market:{x:440,y:540,w:230,h:140,n:'ตลาดกลางคืน',c:'#e6c9a0'},school:{x:730,y:540,w:200,h:140,n:'ศูนย์ฝึกอาชีพ',c:'#c0d0c0'}});
+Object.assign(ROOF,{mall:'#c06070',hospital:'#5aa0a8',gym:'#555a70',library:'#7a6040',market:'#b05a3a',school:'#5a8a5a'});
+Object.assign(ACT,{
+mall:[['🛍 ช้อปปิ้ง ฿200',open(10,22,()=>{if(S.$<200)return toast('เงินไม่พอ');ch({$:-200,m:22});adv(2)})],['🎬 ดูหนัง ฿120',open(10,24,()=>{if(S.$<120)return toast('เงินไม่พอ');ch({$:-120,m:18,e:-3});adv(2.5)})]],
+hospital:[['💊 ตรวจสุขภาพและพักฟื้น ฿150',()=>{if(S.$<150)return toast('เงินไม่พอ');ch({$:-150,e:35,m:4});adv(2)}]],
+gym:[['🏋 ออกกำลังกาย ฿50',open(6,23,()=>{if(S.$<50)return toast('เงินไม่พอ');if(S.e<20)return toast('ไม่มีแรง');ch({$:-50,m:12,e:-12,h:-8});adv(1.5)})]],
+library:[['📖 อ่านหนังสือ 2 ชม.',open(9,20,()=>{ch({m:10,e:-4});adv(2)})]],
+beach:[['🏖 นั่งชิลริมหาด 2 ชม.',()=>{ch({m:20,e:-3});adv(2)}],['🏊 เล่นน้ำ 1 ชม.',()=>{if(S.e<20)return toast('ไม่มีแรง');ch({m:15,e:-10,h:-5});adv(1)}]],
+market:[['🍢 กินของตลาด ฿40',open(17,24,()=>{if(S.$<40)return toast('เงินไม่พอ');ch({$:-40,h:25,m:8});adv(1)})]],
+school:[['🎓 เรียนคอร์ส ฿300 (รายได้ +10%)',open(9,18,()=>{if((S.up||0)>=5)return toast('ทักษะเต็มแล้ว');if(S.$<300)return toast('เงินไม่พอ');if(S.e<20)return toast('เหนื่อยเกินไป');S.up=(S.up||0)+1;ch({$:-300,e:-15,m:3});adv(3);toast('ทักษะระดับ '+S.up+'/5 รายได้เพิ่มแล้ว')})]]});
+const CAM={x:0,y:0},GR2=Array.from({length:520},(_,i)=>[(i*97)%1280,(i*61+i*i)%800]);
+const TR=[[28,240],[262,245],[480,430],[250,430],[28,440],[800,235],[1040,235],[1230,235],[1230,110],[1230,330],[1060,330],[1060,430],[800,430],[1230,500],[420,500],[700,500],[960,520],[1060,600],[1230,640],[980,700],[700,730],[430,760],[1150,700]];
+function draw(){tick++;const tx=Math.max(0,Math.min(640,S.x-320)),ty=Math.max(0,Math.min(400,S.y-200));CAM.x+=(tx-CAM.x)*.15;CAM.y+=(ty-CAM.y)*.15;
+g.setTransform(2,0,0,2,0,0);g.fillStyle='#a9c98f';g.fillRect(0,0,640,400);g.translate(-CAM.x,-CAM.y);
+g.fillRect(0,0,1280,800);g.fillStyle='#9dbf84';GR2.forEach(p=>g.fillRect(p[0],p[1],3,2));
+g.fillStyle='#d2cab4';g.fillRect(0,196,1280,28);g.fillRect(0,450,1280,28);g.fillRect(498,0,32,478);
+g.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<1280;i+=28){g.fillRect(i,208,14,2);g.fillRect(i,462,14,2)}for(let j=0;j<478;j+=28)g.fillRect(513,j,2,14);
+const t=S.t,na=t<7?(7-t)*.2:t>18?Math.min(.5,(t-18)*.08):0,lit=na>.15;
+const pk=Z.park,px=pk.x+pk.w/2,py=pk.y+pk.h*.5;rr(pk.x,pk.y,pk.w,pk.h,18,'#86b06f');g.fillStyle='#8ec3d6';g.beginPath();g.ellipse(px,py,46,26,0,0,7);g.fill();rr(px-30,pk.y+pk.h-16,60,8,3,'#8a6b4c');g.font='bold 13px system-ui';g.textAlign='center';g.fillStyle='#fff';g.fillText(pk.n,px,pk.y+22);
+const bc=Z.beach;rr(bc.x,bc.y,bc.w,bc.h,16,'#f0dfae');rr(bc.x,bc.y+bc.h-60,bc.w,60,16,'#7fb8d6');g.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<bc.w-40;i+=44)g.fillRect(bc.x+16+i,bc.y+bc.h-36,24,3);
+g.fillStyle='#d9534f';g.beginPath();g.arc(bc.x+90,bc.y+95,24,Math.PI,0);g.fill();g.fillStyle='#8a6b4c';g.fillRect(bc.x+89,bc.y+95,2,30);g.fillStyle='#4a4033';g.fillText(bc.n,bc.x+bc.w/2,bc.y+26);
+['home','office','mall','hospital','gym','cafe','shop','library','market','school'].forEach(k=>bld(k,lit));
+TR.forEach(p=>tree(p[0],p[1]));
+const zk=zoneOf(S.x,S.y);if(zk){const z=Z[zk];g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=3;g.beginPath();g.roundRect(z.x-3,z.y-3,z.w+6,z.h+6,12);g.stroke()}
+const now=Date.now(),L=[],mv=Math.hypot(S.x-lx,S.y-ly)>.3;lx=S.x;ly=S.y;
+L.push([S.y,()=>person(S.x,S.y,col,name,now-(S.st||0)<6000?S.say:'',mv)]);
+peers.forEach(p=>{const q=p.presence;if(p.isMe||!q||q.x==null)return;const d=DP[p.peer]||(DP[p.peer]={x:q.x,y:q.y});const m=Math.hypot(q.x-d.x,q.y-d.y)>1.5;d.x+=(q.x-d.x)*.25;d.y+=(q.y-d.y)*.25;L.push([d.y,()=>person(d.x,d.y,q.c||'#888',q.n||'เพื่อน',now-(q.st||0)<6000?q.say:'',m)])});
+L.sort((a,b)=>a[0]-b[0]).forEach(f=>f[1]());
+g.setTransform(2,0,0,2,0,0);if(na>0){g.fillStyle='rgba(18,28,70,'+na+')';g.fillRect(0,0,640,400)}
+const mx=502,my=8;rr(mx-3,my-3,134,86,6,'rgba(0,0,0,.4)');rr(mx,my,128,80,4,'#a9c98f');for(const k in Z){const z=Z[k];g.fillStyle=z.c;g.fillRect(mx+z.x/10,my+z.y/10,z.w/10,z.h/10)}
+peers.forEach(p=>{const q=p.presence;if(!p.isMe&&q&&q.x!=null){g.fillStyle=q.c||'#888';g.fillRect(mx+q.x/10-1.5,my+q.y/10-1.5,3,3)}});g.fillStyle='#fff';g.fillRect(mx+S.x/10-2,my+S.y/10-2,4,4);g.strokeStyle='#222';g.lineWidth=1;g.strokeRect(mx+S.x/10-2,my+S.y/10-2,4,4);
+g.strokeStyle='rgba(255,255,255,.7)';g.strokeRect(mx+CAM.x/10,my+CAM.y/10,64,40)}
+Object.assign(CAR,{nurse:{z:'hospital',a:'🩺 เวรพยาบาล 5 ชม. (+฿450)',h:5,pay:450,e:30,m:5,o:7,c:19},trainer:{z:'gym',a:'🏋 สอนเทรนนิ่ง 3 ชม. (+฿320)',h:3,pay:320,e:18,m:-3,o:6,c:21},librarian:{z:'library',a:'📚 ดูแลห้องสมุด 3 ชม. (+฿220)',h:3,pay:220,e:10,m:-1,o:9,c:19},sales:{z:'mall',a:'🛍 ขายของในห้าง 4 ชม. (+฿300)',h:4,pay:300,e:20,m:2,o:10,c:22},vendor:{z:'market',a:'🍢 ขายของตลาดกลางคืน 4 ชม. (+฿380)',h:4,pay:380,e:22,m:-1,o:17,c:24}});
+Object.entries({nurse:'🩺 พยาบาล (฿450/5 ชม. โรงพยาบาล)',trainer:'🏋 เทรนเนอร์ยิม (฿320/3 ชม. อารมณ์ดี)',librarian:'📚 บรรณารักษ์ (฿220/3 ชม. เหนื่อยน้อยสุด)',sales:'🛍 พนักงานห้าง (฿300/4 ชม.)',vendor:'🍢 พ่อค้าตลาดกลางคืน (฿380/4 ชม. ทำงานกลางคืน)'}).forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;$('jb').appendChild(o)});
+Object.assign(Z,{funpark:{x:1340,y:50,w:270,h:130,n:'สวนสนุก',c:'#f0c8a0'},bank:{x:1650,y:50,w:230,h:130,n:'ธนาคาร',c:'#c8d0e0'},forest:{x:1340,y:260,w:300,h:170,n:'ป่าเขา',c:'#6f9a62'},lake:{x:1680,y:260,w:200,h:170,n:'ทะเลสาบ',c:'#9fc88a'},stadium:{x:980,y:540,w:260,h:160,n:'สนามกีฬา',c:'#6da45a'},orchard:{x:1340,y:540,w:300,h:170,n:'สวนผลไม้',c:'#8fb36f'},salon:{x:60,y:860,w:170,h:130,n:'ร้านเสริมสวย',c:'#e6c4d6'},pub:{x:300,y:860,w:190,h:130,n:'บาร์เปียโน',c:'#b9a0b0'},arcade:{x:540,y:860,w:200,h:130,n:'เกมเซ็นเตอร์',c:'#c4b8e0'},spa:{x:790,y:860,w:190,h:130,n:'สปา',c:'#b8dcd4'}});
+Object.assign(ROOF,{funpark:'#d9573f',bank:'#4a5a78',salon:'#c06a9a',pub:'#5a3a4a',arcade:'#6a4aa0',spa:'#4a9a8a'});
+const bad=m=>()=>toast(m);
+Object.assign(ACT,{
+funpark:[['🎢 เล่นเครื่องเล่น ฿150',open(10,22,()=>{if(S.$<150)return toast('เงินไม่พอ');if(S.e<15)return toast('ไม่มีแรง');ch({$:-150,m:25,e:-8,h:-6});adv(2)})]],
+bank:[['🏦 ฝากเงิน ฿500 (ดอกเบี้ย 2%/วัน)',open(9,16,()=>{if(S.$<500)return toast('เงินไม่พอ');S.$-=500;S.bk=(S.bk||0)+500;adv(.3);toast('ฝากแล้ว ยอดในบัญชี ฿'+S.bk)})],['💵 ถอนเงินทั้งหมด',open(9,16,()=>{if(!S.bk)return toast('ยังไม่มีเงินฝาก');S.$+=S.bk;toast('ถอน ฿'+S.bk);S.bk=0;adv(.3)})]],
+forest:[['🥾 เดินป่า 3 ชม.',open(6,18,()=>{if(S.e<25)return toast('ไม่มีแรง');ch({m:22,e:-18,h:-10});adv(3)})]],
+lake:[['🎣 ตกปลา 2 ชม.',()=>{ch({m:12,e:-6});adv(2);if(Math.random()<.7){const v=90+Math.floor(Math.random()*41);ch({$:v});toast('ได้ปลา! ขายได้ ฿'+v)}else toast('วันนี้ไม่ได้ปลา แต่ผ่อนคลายดี')}]],
+stadium:[['⚽ เล่นฟุตบอล 2 ชม.',open(8,21,()=>{if(S.e<25)return toast('ไม่มีแรง');ch({m:20,e:-20,h:-8});adv(2)})]],
+orchard:[['🍎 เก็บผลไม้ 2 ชม. (฿60-100)',open(7,17,()=>{if(S.e<15)return toast('ไม่มีแรง');const v=60+Math.floor(Math.random()*41);ch({$:v,h:15,e:-10,m:4});toast('เก็บผลไม้ขายได้ ฿'+v);adv(2)})]],
+salon:[['💇 ทำผม ฿100',open(10,20,()=>{if(S.$<100)return toast('เงินไม่พอ');ch({$:-100,m:18});adv(1.5)})]],
+pub:[['🎹 ฟังดนตรีสด ฿150',open(18,24,()=>{if(S.$<150)return toast('เงินไม่พอ');ch({$:-150,m:25,e:-5,h:5});adv(2)})]],
+arcade:[['🕹 เล่นเกม ฿60',open(10,24,()=>{if(S.$<60)return toast('เงินไม่พอ');ch({$:-60,m:14,e:-3});adv(1)})]],
+spa:[['🧖 สปา ฿250',open(10,22,()=>{if(S.$<250)return toast('เงินไม่พอ');ch({$:-250,e:25,m:25});adv(2)})]]});
+const GR3=Array.from({length:900},(_,i)=>[(i*97)%1920,(i*61+i*i)%1100]);
+const TR2=[[1300,235],[1320,420],[1650,235],[1900,235],[1900,430],[1640,470],[1300,520],[1650,760],[1900,760],[1250,760],[1300,830],[1500,830],[1700,840],[1900,830],[1000,780],[40,830],[280,1010],[520,1010],[770,1010],[1000,1010],[1200,1010],[1600,1010]];
+function zl(z,c){g.font='bold 13px system-ui';g.textAlign='center';g.fillStyle=c||'#fff';g.fillText(z.n,z.x+z.w/2,z.y+22)}
+function draw(){tick++;const tx=Math.max(0,Math.min(1280,S.x-320)),ty=Math.max(0,Math.min(700,S.y-200));CAM.x+=(tx-CAM.x)*.15;CAM.y+=(ty-CAM.y)*.15;
+g.setTransform(2,0,0,2,0,0);g.fillStyle='#a9c98f';g.fillRect(0,0,640,400);g.translate(-CAM.x,-CAM.y);
+g.fillRect(0,0,1920,1100);g.fillStyle='#9dbf84';GR3.forEach(p=>g.fillRect(p[0],p[1],3,2));
+g.fillStyle='#d2cab4';g.fillRect(0,196,1920,28);g.fillRect(0,450,1920,28);g.fillRect(0,790,1920,28);g.fillRect(498,0,32,478);g.fillRect(1262,0,32,818);
+g.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<1920;i+=28){g.fillRect(i,208,14,2);g.fillRect(i,462,14,2);g.fillRect(i,802,14,2)}for(let j=0;j<818;j+=28){if(j<478)g.fillRect(513,j,2,14);g.fillRect(1277,j,2,14)}
+const t=S.t,na=t<7?(7-t)*.2:t>18?Math.min(.5,(t-18)*.08):0,lit=na>.15;
+const pk=Z.park,px=pk.x+pk.w/2,py=pk.y+pk.h*.5;rr(pk.x,pk.y,pk.w,pk.h,18,'#86b06f');g.fillStyle='#8ec3d6';g.beginPath();g.ellipse(px,py,46,26,0,0,7);g.fill();rr(px-30,pk.y+pk.h-16,60,8,3,'#8a6b4c');zl(pk);
+const bc=Z.beach;rr(bc.x,bc.y,bc.w,bc.h,16,'#f0dfae');rr(bc.x,bc.y+bc.h-60,bc.w,60,16,'#7fb8d6');g.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<bc.w-40;i+=44)g.fillRect(bc.x+16+i,bc.y+bc.h-36,24,3);
+g.fillStyle='#d9534f';g.beginPath();g.arc(bc.x+90,bc.y+95,24,Math.PI,0);g.fill();g.fillStyle='#8a6b4c';g.fillRect(bc.x+89,bc.y+95,2,30);zl(bc,'#4a4033');
+let z=Z.forest;rr(z.x,z.y,z.w,z.h,16,z.c);for(let i=0;i<7;i++)tree(z.x+30+i*40,z.y+70+(i%3)*30);zl(z);
+z=Z.lake;rr(z.x,z.y,z.w,z.h,16,z.c);g.fillStyle='#7fb8d6';g.beginPath();g.ellipse(z.x+z.w/2,z.y+z.h/2+8,72,48,0,0,7);g.fill();zl(z,'#2b2a27');
+z=Z.stadium;rr(z.x,z.y,z.w,z.h,16,z.c);g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(z.x+14,z.y+30,z.w-28,z.h-44);g.beginPath();g.moveTo(z.x+z.w/2,z.y+30);g.lineTo(z.x+z.w/2,z.y+z.h-14);g.stroke();zl(z);
+z=Z.orchard;rr(z.x,z.y,z.w,z.h,16,z.c);for(let i=0;i<6;i++)for(let j=0;j<3;j++){const a=z.x+34+i*46,b=z.y+60+j*38;g.fillStyle='#4f7d4a';g.beginPath();g.arc(a,b,11,0,7);g.fill();g.fillStyle='#d9534f';g.fillRect(a-3,b-2,3,3)}zl(z);
+['home','office','mall','hospital','gym','cafe','shop','library','market','school','funpark','bank','salon','pub','arcade','spa','exchange','dealer','realty'].forEach(k=>bld(k,lit));
+TR.forEach(p=>tree(p[0],p[1]));TR2.forEach(p=>tree(p[0],p[1]));
+if(S.tx!=null){const k=(tick%40)/40,b=Math.sin(tick/5)*3;g.strokeStyle='rgba(255,255,255,'+(1-k)+')';g.lineWidth=2;g.beginPath();g.arc(S.tx,S.ty,5+k*14,0,7);g.stroke();g.fillStyle='#e8553d';g.beginPath();g.arc(S.tx,S.ty,3.5,0,7);g.fill();g.beginPath();g.moveTo(S.tx,S.ty-8+b);g.lineTo(S.tx-6,S.ty-20+b);g.lineTo(S.tx+6,S.ty-20+b);g.closePath();g.fill()}
+const zk=zoneOf(S.x,S.y);if(zk){const q=Z[zk];g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=3;g.beginPath();g.roundRect(q.x-3,q.y-3,q.w+6,q.h+6,12);g.stroke()}
+const now=Date.now(),L=[],mv=Math.hypot(S.x-lx,S.y-ly)>.3;lx=S.x;ly=S.y;
+L.push([S.y,()=>person(S.x,S.y,col,(CARE[S.car|0]||'')+name,now-(S.st||0)<6000?S.say:'',mv)]);
+peers.forEach(p=>{const q=p.presence;if(p.isMe||!q||q.x==null)return;const d=DP[p.peer]||(DP[p.peer]={x:q.x,y:q.y});const m=Math.hypot(q.x-d.x,q.y-d.y)>1.5;d.x+=(q.x-d.x)*.25;d.y+=(q.y-d.y)*.25;L.push([d.y,()=>person(d.x,d.y,q.c||'#888',(CARE[q.cr|0]||'')+(q.n||'เพื่อน'),now-(q.st||0)<6000?q.say:'',m)])});
+L.sort((a,b)=>a[0]-b[0]).forEach(f=>f[1]());
+g.setTransform(2,0,0,2,0,0);if(na>0){g.fillStyle='rgba(18,28,70,'+na+')';g.fillRect(0,0,640,400)}
+const mx=502,my=8,K=15;rr(mx-3,my-3,134,79,6,'rgba(0,0,0,.4)');rr(mx,my,128,73,4,'#a9c98f');for(const k in Z){const q=Z[k];g.fillStyle=q.c;g.fillRect(mx+q.x/K,my+q.y/K,q.w/K,q.h/K)}
+peers.forEach(p=>{const q=p.presence;if(!p.isMe&&q&&q.x!=null){g.fillStyle=q.c||'#888';g.fillRect(mx+q.x/K-1.5,my+q.y/K-1.5,3,3)}});g.fillStyle='#fff';g.fillRect(mx+S.x/K-2,my+S.y/K-2,4,4);g.strokeStyle='#222';g.lineWidth=1;g.strokeRect(mx+S.x/K-2,my+S.y/K-2,4,4);
+g.strokeStyle='rgba(255,255,255,.7)';g.strokeRect(mx+CAM.x/K,my+CAM.y/K,640/K,400/K)}
+Object.assign(CAR,{teacher:{z:'school',a:'🧑‍🏫 สอนหนังสือ 4 ชม. (+฿360)',h:4,pay:360,e:20,m:0,o:9,c:18},banker:{z:'bank',a:'🏦 ทำงานธนาคาร 4 ชม. (+฿340)',h:4,pay:340,e:15,m:2,o:9,c:16},ride:{z:'funpark',a:'🎢 ดูแลเครื่องเล่น 4 ชม. (+฿310)',h:4,pay:310,e:22,m:-4,o:10,c:22},farmer:{z:'orchard',a:'🍎 ดูแลสวนผลไม้ 4 ชม. (+฿280)',h:4,pay:280,e:28,m:-1,o:7,c:17},fisher:{z:'lake',a:'🎣 ออกเรือประมง 5 ชม. (+฿420)',h:5,pay:420,e:30,m:0,o:5,c:15},analyst:{z:'exchange',a:'📊 วิเคราะห์หุ้น 4 ชม. (+฿330)',h:4,pay:330,e:16,m:-1,o:9,c:17}});
+Object.entries({teacher:'🧑‍🏫 ครู (฿360/4 ชม. ศูนย์ฝึกอาชีพ)',banker:'🏦 พนักงานธนาคาร (฿340/4 ชม.)',ride:'🎢 พนักงานสวนสนุก (฿310/4 ชม.)',farmer:'🍎 ชาวสวนผลไม้ (฿280/4 ชม.)',fisher:'🎣 ชาวประมง (฿420/5 ชม. เหนื่อยหนัก)',analyst:'📊 นักวิเคราะห์หุ้น (฿330/4 ชม.)'}).forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;$('jb').appendChild(o)});
+Z.exchange={x:1340,y:860,w:260,h:130,n:'ตลาดหลักทรัพย์',c:'#cfd6c0'};ROOF.exchange='#3d5a4a';
+const STK=[{id:'BAAN',n:'บ้านสุข พร็อพเปอร์ตี้',p:40,v:.012,t:.0004},{id:'KAFE',n:'กาแฟยามเช้า',p:25,v:.018,t:.0002},{id:'TECH',n:'ไทยเทค',p:120,v:.03,t:.0006},{id:'MALL',n:'เมืองเล็ก รีเทล',p:60,v:.015,t:.0003},{id:'FOOD',n:'อร่อยฟู้ดส์',p:35,v:.01,t:.0003},{id:'ROCK',n:'ร็อกเก็ต เอ็นเนอยี',p:15,v:.045,t:0}];
+STK.forEach(s=>{s.b=s.p;s.h=[s.p]});
+let mstep=0,MSG='';const NEWS=[];
+function rnd(n){const x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)}
+const EP=Math.floor(Date.now()/864e5)*864e5;function mkSync(){const cur=Math.floor((Date.now()+TOFF-EP)/1000);while(mstep<cur){mstep++;const s0=mstep;STK.forEach((s,i)=>{const r=rnd(s0*7.31+i*91.7+1)+rnd(s0*3.17+i*13.3+5)-1;s.p=Math.max(1,s.p*(1+s.v*r*.46*(.6+rnd(Math.floor(s0/90)*2.9+i*4.1)*1.6)+(rnd(Math.floor(s0/120)*3.7+i*17.3)-.5)*2*s.v*.17+(s.u||0)/3+(s.b/s.p-1)*.0007+(rnd(s0*1.37+i*5.9)>.99?(rnd(s0*2.11+i*3.3)-.5)*2*s.v*2.5:0)));s.h.push(s.p);if(s.h.length>360)s.h.shift()});
+if(s0%53===26){const i=Math.floor(rnd(s0*5.1)*STK.length),up=rnd(s0*9.3)>.5,sh=up?.5+rnd(s0*2.9)*2.5:.4+rnd(s0*2.9)*.5,s=STK[i];s.p=Math.max(1,s.p*(up?1+sh:1-sh));s.h[s.h.length-1]=s.p;NEWS.push('📰 '+s.id+' '+(up?'ผลประกอบการเกินคาด ราคาพุ่ง +':'ข่าวร้าย ราคาร่วง -')+Math.round(sh*100)+'%');if(NEWS.length>6)NEWS.shift()}
+if(s0%213===106){const up=rnd(s0*4.7)>.5,sh=up?1+rnd(s0*8.3)*4:.6+rnd(s0*8.3)*.35;STK.forEach(s=>{s.p=Math.max(1,s.p*(up?1+sh*(s.m?.5:1):1-sh*(s.m?.35:1)));s.h[s.h.length-1]=s.p});NEWS.push(up?'🚀 ตลาดบูมทั้งกระดาน +'+Math.round(sh*100)+'%':'💥 ตลาดตกหนักทั้งกระดาน -'+Math.round(sh*100)+'%');if(NEWS.length>6)NEWS.shift()}}}
+function pfVal(){let v=0;for(const k in S.pf||{}){const s=STK.find(x=>x.id===k);if(s)v+=S.pf[k].q*s.p}return v}
+function liq(){let v=0;for(const k in S.pf||{}){const s=STK.find(x=>x.id===k),h=S.pf[k];if(s){const r=Math.floor(s.p*h.q);ST.pl=(ST.pl||0)+r-h.c;v+=r}}return v}
+function spark(a){const w=a.slice(-60),mn=Math.min(...w),mx=Math.max(...w),r=(mx-mn)||1;return `<svg width=80 height=24><polyline fill=none stroke=currentColor stroke-width=1.5 points='${w.map((v,i)=>(i*80/((w.length-1)||1)).toFixed(1)+','+(22-(v-mn)/r*20).toFixed(1)).join(' ')}'/></svg>`}
+function trade(i,a){const s=STK[i],pf=S.pf=S.pf||{};let hd=pf[s.id];
+if(a[0]==='b'){const n=a==='b10'?10:1,cost=Math.ceil(s.p*n);if(S.$<cost){MSG='เงินไม่พอ';return}S.$-=cost;hd=pf[s.id]=hd||{q:0,c:0};hd.q+=n;hd.c+=cost;MSG='ซื้อ '+s.id+' '+n+' หุ้น ฿'+cost}
+else{const n=a==='sa'?(hd?hd.q:0):1;if(!hd||!n||hd.q<n){MSG='ไม่มีหุ้นให้ขาย';return}const rev=Math.floor(s.p*n),cp=hd.c*n/hd.q;ST.pl=(ST.pl||0)+rev-cp;S.$+=rev;hd.q-=n;hd.c-=cp;if(hd.q<=0)delete pf[s.id];MSG='ขาย '+s.id+' '+n+' หุ้น ได้ ฿'+rev}
+ST.tr=(ST.tr||0)+1;sfx('click');hud()}
+function showStk(){const el=$('stk'),sc0=el.scrollTop;mkSync();
+let h=`<div class=card><b>📈 ตลาดหุ้นเมืองเล็ก</b><div>💰 เงินสด ฿${S.$} · พอร์ต ฿${Math.round(pfVal())}</div><div style=font-size:12px;opacity:.85>${NEWS.length?NEWS.slice(-3).map(esc).join('<br>'):'ยังไม่มีข่าว'}</div>${MSG?`<div style=color:#e8a33d>${esc(MSG)}</div>`:''}</div><div class=card>`;
+STK.forEach((s,i)=>{const prev=s.h[s.h.length-2]||s.p,c=(s.p/prev-1)*100,hd=(S.pf||{})[s.id],pl=hd?Math.round(s.p*hd.q-hd.c):0;
+h+=`<div class=st><div><b>${s.id}</b> ${s.n}<br>฿${s.p.toFixed(2)} <span class=${c>=0?'up':'dn'}>${c>=0?'▲':'▼'}${Math.abs(c).toFixed(1)}%</span>${hd?`<br>ถือ ${hd.q} หุ้น · ทุนเฉลี่ย ฿${(hd.c/hd.q).toFixed(1)} · <span class=${pl>=0?'up':'dn'}>${pl>=0?'+':''}${pl}</span>`:''}</div><div>${spark(s.h)}</div><div class=b><button data-a=b1 data-i=${i}>ซื้อ 1</button><button data-a=b10 data-i=${i}>ซื้อ 10</button><button data-a=s1 data-i=${i}>ขาย 1</button><button data-a=sa data-i=${i}>ขายหมด</button></div></div>`});
+h+=`</div><div class=row style=width:100%;max-width:460px><button id=sk>ปิด</button></div>`;el.innerHTML=h;el.scrollTop=sc0;el.hidden=false}
+$('stk').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='sk'){$('stk').hidden=true;return}trade(+b.dataset.i,b.dataset.a);showStk()};
+setInterval(()=>{if(!$('stk').hidden&&Date.now()-TS>1800)showStk()},1500);
+ACT.exchange=[['📈 เปิดหน้าซื้อขายหุ้น',()=>{MSG='';showStk()}]];
+function rollPay(){const r=Math.random();return r<.15?[.9+Math.random()*.05,'😕 วันนี้ได้น้อย',-1]:r<.75?[.97+Math.random()*.06,'🙂 ค่าจ้างปกติ',0]:r<.95?[1.05+Math.random()*.05,'😄 ได้โบนัสเพิ่ม!',1]:[1.12+Math.random()*.08,'🤩 วันนี้ดวงดี!',2]}
+function liq(){let v=0;for(const k in S.pf||{}){const s=STK.find(x=>x.id===k),h=S.pf[k];if(s){const r=Math.floor(s.p*h.q);ST.pl=(ST.pl||0)+r-h.c;v+=r}}for(const k in S.sh||{}){const s=STK.find(x=>x.id===k),o=S.sh[k];if(s){const r=Math.max(0,Math.round(2*o.e-o.q*s.p));ST.pl=(ST.pl||0)+r-o.e;v+=r}}return v}
+function pfVal(){let v=0;for(const k in S.pf||{}){const s=STK.find(x=>x.id===k);if(s)v+=S.pf[k].q*s.p}for(const k in S.sh||{}){const s=STK.find(x=>x.id===k),o=S.sh[k];if(s)v+=Math.max(0,2*o.e-o.q*s.p)}return v}
+function mcall(){for(const k in S.sh||{}){const s=STK.find(x=>x.id===k),o=S.sh[k];if(!s)continue;const eq=2*o.e-o.q*s.p;if(eq<=.2*o.e){const r=Math.max(0,Math.round(eq));ST.pl=(ST.pl||0)+r-o.e;S.$+=r;delete S.sh[k];MSG='⚠️ Margin Call! ถูกบังคับปิดชอร์ต '+k+' ได้คืน ฿'+r;NEWS.push('⚠️ '+k+' พุ่งแรง ชอร์ตถูกบังคับปิด');if(NEWS.length>6)NEWS.shift();toast(MSG)}}}
+function trade(i,a){const s=STK[i];S.pf=S.pf||{};S.sh=S.sh||{};const pf=S.pf,sh=S.sh;let hd=pf[s.id];
+if(a==='b1'||a==='b10'){const n=a==='b10'?10:1,cost=Math.ceil(s.p*n);if(S.$<cost){MSG='เงินไม่พอ';return}S.$-=cost;hd=pf[s.id]=hd||{q:0,c:0};hd.q+=n;hd.c+=cost;MSG='ซื้อขาขึ้น '+s.id+' '+n+' หุ้น ฿'+cost}
+else if(a==='s1'||a==='sa'){const n=a==='sa'?(hd?hd.q:0):1;if(!hd||!n||hd.q<n){MSG='ไม่มีหุ้นให้ขาย';return}const rev=Math.floor(s.p*n),cp=hd.c*n/hd.q;ST.pl=(ST.pl||0)+rev-cp;S.$+=rev;hd.q-=n;hd.c-=cp;if(hd.q<=0)delete pf[s.id];MSG='ขาย '+s.id+' '+n+' หุ้น ได้ ฿'+rev}
+else if(a==='h1'||a==='h10'){const n=a==='h10'?10:1,need=Math.ceil(s.p*n);if(S.$<need){MSG='เงินประกันไม่พอ (ต้อง ฿'+need+')';return}S.$-=need;const o=sh[s.id]=sh[s.id]||{q:0,e:0};o.q+=n;o.e+=need;MSG='เปิดชอร์ต '+s.id+' '+n+' หุ้น (วางประกัน ฿'+need+')'}
+else if(a==='hc'){const o=sh[s.id];if(!o){MSG='ไม่มีสถานะชอร์ต';return}const eq=Math.max(0,Math.round(2*o.e-o.q*s.p));ST.pl=(ST.pl||0)+eq-o.e;S.$+=eq;MSG='ปิดชอร์ต '+s.id+' ได้คืน ฿'+eq+' ('+(eq>=o.e?'+':'')+(eq-o.e)+')';delete sh[s.id]}
+ST.tr=(ST.tr||0)+1;sfx('click');hud()}
+function chart(s,W,H){const a=s.h.slice(-300),mn=Math.min(...a),mx=Math.max(...a),r=(mx-mn)||1,px=i=>(i*W/((a.length-1)||1)).toFixed(1),py=v=>Math.max(2,Math.min(H-2,H-4-(v-mn)/r*(H-8))).toFixed(1),c=a[a.length-1]>=a[0]?'#2e9b5a':'#d9534f',pts=a.map((v,i)=>px(i)+','+py(v)).join(' ');let ln='';const L=(S.pf||{})[s.id],Sh=(S.sh||{})[s.id];
+if(L)ln+=`<line x1=0 x2=${W} y1=${py(L.c/L.q)} y2=${py(L.c/L.q)} stroke=#3d7ea6 stroke-dasharray='4 3'/>`;if(Sh)ln+=`<line x1=0 x2=${W} y1=${py(Sh.e/Sh.q)} y2=${py(Sh.e/Sh.q)} stroke=#d9a441 stroke-dasharray='4 3'/>`;
+return `<svg viewBox='0 0 ${W} ${H}' width=100% height=${H} preserveAspectRatio=none><polygon points='0,${H} ${pts} ${W},${H}' fill=${c} opacity=.15 /><polyline fill=none stroke=${c} stroke-width=2 points='${pts}'/>${ln}</svg>`}
+let SEL=0;
+function showStk(){const el=$('stk');mkSync();const lc=el.querySelector('.l'),rc=el.querySelector('.rr'),s1=lc?lc.scrollTop:0,s2=rc?rc.scrollTop:0;S.pf=S.pf||{};S.sh=S.sh||{};const s=STK[SEL],FC=DEV?peek(3):null;
+let list='';STK.forEach((x,i)=>{const pv=x.h[Math.max(0,x.h.length-21)],c=(x.p/pv-1)*100,L=S.pf[x.id],H=S.sh[x.id];list+=`<div class='it${i===SEL?' on':''}' style='border-left:5px solid ${c>=0?'#2e9b5a':'#d9534f'}' data-sel=${i}><div><b>${x.id}</b> <span class=${c>=0?'up':'dn'}>${c>=0?'▲':'▼'}${Math.abs(c).toFixed(1)}%</span><br><span class=sm>฿${x.p.toFixed(2)}${L?' · 📈'+L.q:''}${H?' · 📉'+H.q:''}${FC?` · 🔮${FC[i]>=x.p?'▲':'▼'}${(Math.abs(FC[i]/x.p-1)*100).toFixed(0)}%`:''}</span></div><div>${spark(x.h)}</div></div>`});
+const L=S.pf[s.id],H=S.sh[s.id],pv=s.h[Math.max(0,s.h.length-21)],c=(s.p/pv-1)*100,lp=L?Math.round(s.p*L.q-L.c):0,hp=H?Math.round(H.e-s.p*H.q):0,pf=Math.round(pfVal());
+const head=`<div class=card><b>📈 ตลาดหุ้นเมืองเล็ก</b><div class=sm>💰 เงินสด ฿${S.$} · 💼 พอร์ต ฿${pf} · รวม ฿${S.$+pf}</div></div>`;
+const det=`<div class=card><div class=hd><b>${s.id}</b> ${esc(s.n)}</div><div class='px ${c>=0?'up':'dn'}'>฿${s.p.toFixed(2)} <span class=${c>=0?'up':'dn'}>${c>=0?'▲':'▼'}${Math.abs(c).toFixed(1)}%</span></div>${chart(s,360,150)}<div class=sm>${per(s,20,'1 นาที')} · ${per(s,100,'5 นาที')}</div><div class=pos>${L?`📈 ขาขึ้น ถือ ${L.q} หุ้น · ทุน ฿${(L.c/L.q).toFixed(1)} · <span class=${lp>=0?'up':'dn'}>${lp>=0?'+':''}${lp}</span>`:'📈 ไม่มีสถานะขาขึ้น'}<br>${H?`📉 ขาลง ชอร์ต ${H.q} หุ้น · เข้าที่ ฿${(H.e/H.q).toFixed(1)} · <span class=${hp>=0?'up':'dn'}>${hp>=0?'+':''}${hp}</span>`:'📉 ไม่มีสถานะขาลง'}</div></div>
+<div class=card><div class=tb><div class=g><b class=up>📈 ขาขึ้น (Long)</b><small>ซื้อแล้วหวังราคาขึ้น</small><div class=bt><button class=gb data-a=b1>ซื้อ 1</button><button class=gb data-a=b10>ซื้อ 10</button><button class=ob data-a=s1>ขาย 1</button><button class=ob data-a=sa>ขายหมด</button></div></div><div class=g><b class=dn>📉 ขาลง (Short)</b><small>ขายก่อนหวังราคาลง · วางประกัน = ราคา · ถ้าพุ่งแรงจะถูกบังคับปิด</small><div class=bt><button class=rb data-a=h1>เปิด 1</button><button class=rb data-a=h10>เปิด 10</button><button class=ob data-a=hc>ปิดสถานะ</button></div></div></div></div>
+${slAi(s)}<div class=card><div class=sm>${NEWS.length?NEWS.slice(-3).map(esc).join('<br>'):'ยังไม่มีข่าว'}</div>${MSG?`<div class=sm style=color:#e8a33d>${esc(MSG)}</div>`:''}</div>`;
+el.innerHTML=`<div class=w><div class=l>${head}${list}</div><div class=rr>${det}</div></div><div class=row style=width:100%;max-width:980px><button id=sk>ปิด</button><button id=sc>🏢 บริษัท</button></div>`;
+const l2=el.querySelector('.l'),r2=el.querySelector('.rr');if(l2)l2.scrollTop=s1;if(r2)r2.scrollTop=s2;el.hidden=false}
+$('stk').onclick=e=>{const it=e.target.closest('[data-sel]');if(it){SEL=+it.dataset.sel;showStk();return}const b=e.target.closest('button');if(!b)return;if(b.id==='sk'){$('stk').hidden=true;return}if(b.dataset.sl!==undefined){S.slc=S.slc||{};const id=STK[SEL].id;S.slc[id]=+b.dataset.sl;MSG=+b.dataset.sl>0?'ตั้งหยุดขาดทุน '+id+' ที่ -'+b.dataset.sl+'%':'ปิดหยุดขาดทุน '+id;showStk();return}if(b.dataset.ai){mkSync();runAI(STK[SEL]);showStk();return}if(b.dataset.a){trade(SEL,b.dataset.a);showStk()}};
+function per(s,n,l){const o=s.h[Math.max(0,s.h.length-1-n*3)],c=(s.p/o-1)*100;return l+' <b class='+(c>=0?'up':'dn')+'>'+(c>=0?'▲ +':'▼ -')+Math.abs(c).toFixed(1)+'%</b>'}
+let TOFF=0;const AI={},CN=['▲ ขึ้น','▼ ลง','▬ ไซด์เวย์'];
+function autoSL(){const slc=S.slc||{};for(const k in slc){const p=slc[k];if(!p)continue;const s=STK.find(x=>x.id===k);if(!s)continue;const h=(S.pf||{})[k],o=(S.sh||{})[k];
+if(h&&s.p<=h.c/h.q*(1-p/100)){const r=Math.floor(s.p*h.q);ST.pl=(ST.pl||0)+r-h.c;S.$+=r;delete S.pf[k];MSG='🛑 หยุดขาดทุนอัตโนมัติ: ขาย '+k+' ('+h.q+' หุ้น) ได้ ฿'+r;NEWS.push(MSG);if(NEWS.length>6)NEWS.shift();toast(MSG)}
+if(o&&s.p>=o.e/o.q*(1+p/100)){const r=Math.max(0,Math.round(2*o.e-o.q*s.p));ST.pl=(ST.pl||0)+r-o.e;S.$+=r;delete S.sh[k];MSG='🛑 หยุดขาดทุนอัตโนมัติ: ปิดชอร์ต '+k+' ได้คืน ฿'+r;NEWS.push(MSG);if(NEWS.length>6)NEWS.shift();toast(MSG)}}}
+function peek(n){const sp=STK.map(s=>s.p),sh=STK.map(s=>s.h.slice()),ms=mstep,nw=NEWS.slice();TOFF=n*1000;mkSync();const out=STK.map(s=>s.p);TOFF=0;STK.forEach((s,i)=>{s.p=sp[i];s.h=sh[i]});mstep=ms;NEWS.length=0;nw.forEach(x=>NEWS.push(x));return out}
+function easy(s){const a=s.h.slice(-121),n=a.length-1;if(n<60)return false;let u=0;for(let i=1;i<=n;i++)if(a[i]>a[i-1])u++;return Math.max(u,n-u)/n>=.56&&Math.abs(a[n]/a[0]-1)>=.12}
+function cls3(r){return r>.03?0:r<-.03?1:2}
+function runAI(s){const o=AI[s.id];if(o&&Date.now()-o.at<60000){MSG='AI กำลังรอผลของ '+s.id+' อยู่';return}if(S.$<30){MSG='เงินไม่พอ (ค่า AI ฿30)';return}S.$-=30;const ez=easy(s),acc=ez?.44:.24,fut=peek(60)[STK.indexOf(s)],tr=cls3(fut/s.p-1);let c;if(Math.random()<acc)c=tr;else{const w=[0,1,2].filter(x=>x!==tr);c=w[Math.random()<.5?0:1]}AI[s.id]={cls:c,p0:s.p,at:Date.now(),acc,ez,t:tr};MSG='🤖 วิเคราะห์ '+s.id+' เสร็จ (-฿30)'}
+function slAi(s){const slc=(S.slc||{})[s.id]||0,o=AI[s.id],ez=easy(s);
+let r=(DEV?devCard(s):'')+`<div class=card><b>🛑 หยุดขาดทุนอัตโนมัติ</b><div class=sm>ขายหรือปิดชอร์ตให้เองเมื่อขาดทุนถึงระดับที่ตั้ง (ใช้กับทั้งขาขึ้นและขาลงของ ${s.id})</div><div class=bt>${[0,10,25,40].map(v=>`<button class=${slc===v?'gb':'ob'} data-sl=${v}>${v?'-'+v+'%':'ปิด'}</button>`).join('')}</div></div>`;
+r+=`<div class=card><b>🤖 AI วิเคราะห์กราฟ ${s.id}</b><div class=sm>แนวโน้ม 1 นาทีข้างหน้า · ค่าวิเคราะห์ ฿30 · ความแม่นรอบนี้ <b>${ez?'44%':'24%'}</b> (${ez?'กราฟอ่านง่าย เทรนด์ชัด':'กราฟซับซ้อน'})</div>`;
+if(o){const left=Math.ceil((60000-(Date.now()-o.at))/1000);if(left>0)r+=`<div class=sm>AI คาดว่า: <b>${CN[o.cls]}</b> · รอผลอีก ${left} วิ (แม่น ${Math.round(o.acc*100)}%)</div>`;else{if(!o.done){o.done=1;ST.ai=(ST.ai||0)+1;if(o.cls===o.t)ST.aok=(ST.aok||0)+1}r+=`<div class=sm>AI คาด ${CN[o.cls]} → ผลจริง ${CN[o.t]} ${o.cls===o.t?'✅ ถูก':'❌ ผิด'}</div>`}}
+r+=`<div class=bt><button class=gb data-ai=1>🤖 ให้ AI วิเคราะห์ ฿30</button></div><div class=sm>AI ถูก ${ST.aok||0}/${ST.ai||0} ครั้ง</div></div>`;return r}
+let DEV=false,TS=0,devT=0;const DALR={};
+Object.assign(Z.exchange,{x:300,y:270,w:170,h:130});Object.assign(Z.shop,{x:1340,y:860,w:170,h:130});
+['scroll','touchstart','touchmove','pointerdown','wheel'].forEach(ev=>$('stk').addEventListener(ev,()=>{TS=Date.now()},{capture:true,passive:true}));
+$('dvb').onclick=()=>{MSG='';showStk()};
+function devMsg(t){const b=$('devb');DEVTXT=t;DEVAT=Date.now();b.textContent=t;b.hidden=false;toast(t);sfx('coop');clearTimeout(devT);devT=setTimeout(()=>{b.hidden=true},9000)}
+function devWatch(){if(!DEV)return;const now=Date.now();for(let e=mstep+1;e<=mstep+12;e++){const rem=(EP+e*1000-now)/1000;if(rem>10||rem<=0)continue;
+if(e%53===26&&!DALR['i'+e]){DALR['i'+e]=1;const i=Math.floor(rnd(e*5.1)*STK.length),up=rnd(e*9.3)>.5,sh=up?.5+rnd(e*2.9)*2.5:.4+rnd(e*2.9)*.5;devMsg('🛠 DEV แจ้งเตือน ~10 วิ: '+STK[i].id+(up?' จะพุ่ง ▲ +':' จะร่วง ▼ -')+Math.round(sh*100)+'%')}
+if(e%213===106&&!DALR['m'+e]){DALR['m'+e]=1;const up=rnd(e*4.7)>.5,sh=up?1+rnd(e*8.3)*4:.6+rnd(e*8.3)*.35;devMsg('🛠 DEV แจ้งเตือน ~10 วิ: ตลาดทั้งกระดาน'+(up?'จะบูม ▲ +':'จะตกหนัก ▼ -')+Math.round(sh*100)+'%')}}}
+function devCard(s){const i=STK.indexOf(s),a=peek(10)[i],b=peek(60)[i],f=v=>{const c=(v/s.p-1)*100;return `<b class=${c>=0?'up':'dn'}>${c>=0?'▲ ขึ้น +':'▼ ลง -'}${Math.abs(c).toFixed(1)}%</b>`};
+return `<div class=card style='border:1px dashed #d9a441'><b>🛠 DEV มองอนาคต ${s.id}</b><div class=sm>อีก ~10 วิ: ${f(a)}<br>อีก 1 นาที: ${f(b)}</div></div>`}
+function isDev(t){return ['my test','my game'].includes(String(t).trim().toLowerCase())}
+function devSaved(){try{return localStorage.getItem('lifetown_dev')==='1'}catch(e){return false}}
+function setDev(on){DEV=on;$('dvb').hidden=!on;if(on){try{localStorage.setItem('lifetown_dev','1')}catch(e){}toast('🛠 โหมดผู้พัฒนาเปิดแล้ว มีปุ่ม 📈 หุ้น ข้างปุ่มเสียง');sfx('coop')}}
+const CARS=[null,{n:'🚲 จักรยาน',p:3000,s:'เดินเร็ว +25%'},{n:'🛵 มอเตอร์ไซค์',p:60000,s:'เร็ว +60% · อารมณ์/วัน +1'},{n:'🚗 รถเก๋ง',p:1500000,s:'เร็ว x2 · อารมณ์/วัน +2'},{n:'🏎 รถสปอร์ต',p:100000000,s:'เร็ว +140% · อารมณ์/วัน +3'}];
+const HOMES=[{n:'ห้องเช่า',p:0},{n:'🏘 ทาวน์เฮาส์',p:800000,s:'นอนฟื้นพลังงาน +5 · อารมณ์/วัน +2'},{n:'🏡 บ้านเดี่ยว',p:8000000,s:'พลังงาน +10 · อารมณ์/วัน +4'},{n:'🏰 คฤหาสน์',p:100000000,s:'พลังงาน +20 · อารมณ์/วัน +8'}];
+const CARE=['','🚲 ','🛵 ','🚗 ','🏎 '];
+function spd(){return [1,1.25,1.6,2,2.4][S.car|0]}
+function assetVal(){return Math.round(.5*((S.car?CARS[S.car].p:0)+(S.hs?HOMES[S.hs].p:0)))}
+function applyAssets(){const t=S.hs|0;Z.home.n=['บ้าน (ห้องเช่า)','ทาวน์เฮาส์','บ้านเดี่ยว','คฤหาสน์'][t];Z.home.c=['#d9c7a8','#d8b9a0','#e6d9b0','#f1e6c6'][t];ROOF.home=['#a8553f','#9a4a3a','#7a4a6a','#2f4a6a'][t]}
+Z.dealer={x:1010,y:860,w:150,h:130,n:'ศูนย์รถยนต์',c:'#d4d8de'};Z.realty={x:1170,y:860,w:150,h:130,n:'อสังหาฯ',c:'#e0d4c0'};ROOF.dealer='#b03a3a';ROOF.realty='#3a6a8a';
+function carActs(){const r=[];for(let i=(S.car|0)+1;i<5;i++){const c=CARS[i];r.push([c.n+' ฿'+nf(c.p)+' ('+c.s+')',open(9,20,()=>buyCar(i))])}if(!r.length)r.push(['🏁 คุณมีรถในฝันแล้ว',()=>{}]);return r}
+function buyCar(i){const c=CARS[i],ti=S.car?Math.round(CARS[S.car].p*.5):0;if(S.$+ti<c.p)return toast('เงินไม่พอ (ต้องการ ฿'+nf(c.p)+(ti?' ได้คืนรถเก่า ฿'+ti:'')+')');S.$+=ti-c.p;S.car=i;adv(.5);sfx('coin');toast('ซื้อ '+c.n+' สำเร็จ! 🎉');lastZ='~'}
+function homeActs(){const r=[];for(let i=(S.hs|0)+1;i<4;i++){const h=HOMES[i];r.push([h.n+' ฿'+nf(h.p)+' ('+h.s+')',open(9,18,()=>buyHome(i))])}if(!r.length)r.push(['🏰 คุณมีบ้านในฝันแล้ว',()=>{}]);return r}
+function buyHome(i){const h=HOMES[i],ti=S.hs?Math.round(HOMES[S.hs].p*.6):0;if(S.$+ti<h.p)return toast('เงินไม่พอ (ต้องการ ฿'+nf(h.p)+(ti?' ได้คืนบ้านเก่า ฿'+ti:'')+')');S.$+=ti-h.p;S.hs=i;adv(1);sfx('coin');toast('ย้ายเข้า '+h.n+' แล้ว! 🎉');lastZ='~'}
+Object.defineProperty(ACT,'dealer',{get:carActs,enumerable:true,configurable:true});Object.defineProperty(ACT,'realty',{get:homeActs,enumerable:true,configurable:true});
+const nf=n=>{n=Number(n);const a=Math.abs(n);if(a<1e6)return n.toLocaleString('en-US');for(const [v,u] of [[1e18,'ล้านล้านล้าน'],[1e15,'พันล้านล้าน'],[1e12,'ล้านล้าน'],[1e9,'พันล้าน'],[1e6,'ล้าน']])if(a>=v)return (n/v).toFixed(2).replace(/\.?0+$/,'')+' '+u;return String(n)};
+const CNM=[['☕','ร้านกาแฟสตาร์ทอัพ'],['💧','โรงงานน้ำดื่ม'],['🏪','เครือร้านสะดวกซื้อ'],['🏖','โรงแรมริมหาด'],['🚚','บริษัทขนส่ง'],['🎮','สตูดิโอเกม'],['🖨','โรงพิมพ์'],['🌾','ฟาร์มอินทรีย์'],['🏥','เครือโรงพยาบาล'],['🛍','ห้างสรรพสินค้าเมืองเล็ก'],['🏦','ธนาคารชุมชน'],['✈','สายการบินภูมิภาค'],['☀','โรงไฟฟ้าโซลาร์'],['🏘','บริษัทอสังหาฯ'],['🏨','เครือโรงแรมหรู'],['🔋','โรงงานรถยนต์ไฟฟ้า'],['🤖','บริษัทเทคโนโลยี AI'],['🏬','เครือค้าปลีกยักษ์ใหญ่'],['⚡','กลุ่มพลังงานแห่งชาติ'],['🎬','จักรวาลบันเทิงเมืองเล็ก']];
+const COM=CNM.map((x,i)=>({e:x[0],n:x[1],b:Math.round(75e6*Math.pow(120,i/19)/1e5)*1e5,j:i%6}));COM[0].b=75e6;COM[19].b=9e9;
+let CMSG='',TS2=0;
+function cval(i){const c=COM[i],s=STK[c.j],f=Math.max(.25,Math.min(4,Math.pow(s.p/s.b,.5)));return Math.round(c.b*f)}
+function coVal(){let v=0;for(const k in S.co||{})v+=cval(+k);return v}
+function companyTick(){const co=S.co;if(!co)return;const H=S.d*24+S.t;for(const k in co){const o=co[k];let n=0,tot=0;while(H>=o.n){const a=Math.round(cval(+k)*.7);S.$+=a;o.paid+=a;tot+=a;o.n+=48;n++}if(n){sfx('coin');toast('🏢 '+COM[+k].n+' จ่ายเงินให้คุณ ฿'+nf(tot)+(n>1?' ('+n+' รอบ)':''))}}}
+function buyCo(i){S.co=S.co||{};const v=cval(i);if(S.co[i]){CMSG='คุณถือบริษัทนี้อยู่แล้ว';return}if(S.$<v){CMSG='เงินไม่พอ (ต้องการ ฿'+nf(v)+')';return}S.$-=v;S.co[i]={n:S.d*24+S.t+48,paid:0,cost:v};CMSG='ซื้อ '+COM[i].n+' ในราคา ฿'+nf(v)+' 🎉';sfx('coin');hud()}
+function sellCo(i){if(!(S.co||{})[i])return;const v=cval(i);S.$+=v;delete S.co[i];CMSG='ขาย '+COM[i].n+' ได้ ฿'+nf(v);sfx('coin');hud()}
+function showCmp(){const el=$('cmp'),sc=el.scrollTop;mkSync();S.co=S.co||{};const H=S.d*24+S.t;let own=0,pay=0;for(const k in S.co){own++;pay+=Math.round(cval(+k)*.2)}
+let h=`<div class=card style=width:100%;max-width:980px><b>🏢 ซื้อกิจการบริษัท</b><div class=sm>💰 เงินสด ฿${nf(S.$)} · ถือ ${own} บริษัท · รอบถัดไปจ่ายรวมประมาณ ฿${nf(pay)}</div><div class=sm>แต่ละบริษัทจ่าย 20% ของมูลค่าปัจจุบัน ทุก 48 ชม.ในเกม · มูลค่าขึ้นลงตามตลาดหุ้น</div>${CMSG?`<div class=sm style=color:#e8a33d>${esc(CMSG)}</div>`:''}</div><div class=w>`;
+COM.forEach((c,i)=>{const v=cval(i),o=S.co[i],ch=(v/c.b-1)*100;h+=`<div class=card><b>${c.e} ${c.n}</b><div class='px ${ch>=0?'up':'dn'}'>฿${nf(v)}</div><div class=sm>ราคาตั้งต้น ฿${nf(c.b)} · <span class=${ch>=0?'up':'dn'}>${ch>=0?'▲ +':'▼ '}${ch.toFixed(0)}%</span> · ผูกกับหุ้น ${STK[c.j].id}</div><div class=sm>💸 จ่ายครั้งละ ฿${nf(Math.round(v*.2))}${o?` · จ่ายถัดไปอีก ${Math.max(0,Math.ceil(o.n-H))} ชม. · รับแล้วรวม ฿${nf(o.paid)}`:''}</div><div class=bt>${o?`<button class=rb data-s=${i}>ขาย ฿${nf(v)}</button>`:`<button class=gb data-b=${i}>ซื้อ ฿${nf(v)}</button>`}</div></div>`});
+h+=`</div><div class=row style=width:100%;max-width:980px><button id=ck>ปิด</button><button id=cs>📈 หุ้น</button></div>`;el.innerHTML=h;el.scrollTop=sc;el.hidden=false}
+$('cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='ck'){$('cmp').hidden=true;return}if(b.id==='cs'){$('cmp').hidden=true;MSG='';showStk();return}if(b.dataset.b!==undefined)buyCo(+b.dataset.b);if(b.dataset.s!==undefined)sellCo(+b.dataset.s);showCmp()};
+$('stk').addEventListener('click',e=>{if(e.target.closest('#sc')){$('stk').hidden=true;CMSG='';showCmp()}});
+['scroll','touchstart','touchmove','pointerdown','wheel'].forEach(ev=>$('cmp').addEventListener(ev,()=>{TS2=Date.now()},{capture:true,passive:true}));
+setInterval(()=>{if(!$('cmp').hidden&&Date.now()-TS2>1800)showCmp()},2500);
+ACT.exchange.push(['🏢 ซื้อกิจการบริษัท',()=>{CMSG='';showCmp()}]);
+const OWN=['คุณสมชาย ใจดี','คุณวิภา รุ่งเรือง','คุณธนากร ศรีสุข','คุณมาลี แก้วมณี','คุณประเสริฐ ทองดี','คุณนภา จันทร์เพ็ญ','คุณกิตติ วงศ์ไทย','คุณสุดา พิพัฑน์','คุณอนันต์ เจริญกิจ','คุณปรีชา สุขสวัสดิ์','คุณรัตนา ลิขิต','คุณวิชัย มั่นคง','คุณพิมพ์ใจ ศรีทอง','คุณชาติชาย เพชรรัตน์','คุณจันทร์เพ็ญ วัฒนา','คุณสมศักดิ์ เลิศล้ำ','คุณอรุณี ธนพัฒน์','คุณเกรียงไกร ยิ่งยง','คุณศิริพร มหาสุข','ท่านประธานวิรัตน์ มหาเศรษฐี'];
+const TRT=[{n:'ใจกว้าง',e:'😊',g:.95,h:1,o:.7},{n:'ขี้โลภ',e:'🤑',g:1.2,h:.85,o:.8},{n:'เจ้าเล่ห์',e:'😏',g:1.1,h:.9,o:.8},{n:'ใจเย็น',e:'😌',g:1,h:.95,o:.75},{n:'อารมณ์ร้อน',e:'😠',g:1.05,h:.9,o:.88}];
+const CD={};let NEG=null;
+function dealBuy(i,p){S.co=S.co||{};if(S.co[i]){CMSG='คุณถือบริษัทนี้อยู่แล้ว';return false}if(S.$<p){CMSG='เงินไม่พอ (ต้องการ ฿'+nf(p)+')';return false}S.$-=p;S.co[i]={n:S.d*24+S.t+48,paid:0,cost:p};CMSG='ซื้อ '+COM[i].n+' ในราคา ฿'+nf(p)+' 🎉';sfx('coin');hud();return true}
+function dealSell(i,p){if(!(S.co||{})[i])return false;S.$+=p;delete S.co[i];CMSG='ขาย '+COM[i].n+' ได้ ฿'+nf(p);sfx('coin');hud();return true}
+function startNeg(i,mode){const v=cval(i);if(mode==='buy'&&(CD[i]||0)>Date.now()){CMSG='เจ้าของ '+OWN[i]+' ไม่อยากคุยตอนนี้ (รออีก '+Math.ceil((CD[i]-Date.now())/1000)+' วิ)';return}
+const t=mode==='buy'?TRT[i%5]:TRT[(i+2)%5],nm=mode==='buy'?OWN[i]:'นักลงทุน '+OWN[(i+7)%20].replace('คุณ','');NEG={i,mode,round:0,done:0,log:[],t,nm};
+if(mode==='buy'){NEG.min=v*t.g;NEG.ask=Math.round(NEG.min*1.12);NEG.off=v;NEG.log.push([0,'สนใจกิจการของผมเหรอ? ผมขอ ฿'+nf(NEG.ask)])}
+else{NEG.max=v*t.h;NEG.ask=Math.round(NEG.max*.85);NEG.off=Math.round(v*1.1);NEG.log.push([0,'สนใจซื้อกิจการคุณ ผมให้ ฿'+nf(NEG.ask)])}}
+function negFinish(p){const N=NEG,ok=N.mode==='buy'?dealBuy(N.i,p):dealSell(N.i,p);if(ok){N.done=1;N.res=(N.mode==='buy'?'ซื้อสำเร็จ ฿':'ขายสำเร็จ ฿')+nf(p);N.log.push([0,'ยินดีที่ได้ทำธุรกิจกับคุณ! 🤝'])}else N.log.push([0,'ดูเหมือนเงินคุณจะไม่พอนะ'])}
+function negFail(){const N=NEG;N.done=1;N.res='เจรจาไม่สำเร็จ';if(N.mode==='buy')CD[N.i]=Date.now()+40000;N.log.push([0,'เสียดายจัง ไว้คุยกันใหม่ทีหลังแล้วกัน'])}
+function negGo(g){const N=NEG,o=N.off;if(N.done)return;
+if(g==='leave'){N.done=1;N.res='คุณถอนตัวจากการเจรจา';N.log.push([1,'ขอคิดดูก่อนนะครับ']);return}
+if(g==='accept'){N.log.push([1,'ตกลงตามราคา ฿'+nf(N.ask)]);negFinish(N.ask);return}
+if(N.mode==='buy'){N.log.push([1,'ผมเสนอ ฿'+nf(o)]);const r=o/N.min;if(r>=1){negFinish(o);return}N.round++;
+if(r<N.t.o)N.log.push([0,'ราคาแบบนี้ดูหมิ่นกันนี่! ลองใหม่สิ']);else{N.ask=Math.min(N.ask,Math.round(Math.max(N.min,o+(N.ask-o)*.5)));N.log.push([0,'ใกล้แล้ว ผมลดให้เหลือ ฿'+nf(N.ask)])}}
+else{N.log.push([1,'ผมขอ ฿'+nf(o)]);if(o<=N.max){negFinish(o);return}N.round++;if(o/N.max>1.15)N.log.push([0,'แพงเกินไปนะ ลดหน่อยได้ไหม']);else{N.ask=Math.round(Math.min(N.max,N.ask+(N.max-N.ask)*.6));N.log.push([0,'ผมให้ได้ ฿'+nf(N.ask)])}}
+if(N.round>=4&&!N.done)negFail()}
+function renderNeg(el){const N=NEG,c=COM[N.i],v=cval(N.i),buy=N.mode==='buy';
+let h=`<div class=card style=width:100%;max-width:560px><b>🤝 เจรจา${buy?'ซื้อ':'ขาย'} ${c.e} ${c.n}</b><div class=sm>มูลค่าตลาด ฿${nf(v)} · รอบที่ ${Math.min(N.round+1,4)}/4</div><div class=sm>${N.t.e} ${esc(N.nm)} · นิสัย${N.t.n}</div></div><div class=card style=width:100%;max-width:560px>`;
+N.log.slice(-6).forEach(l=>{h+=`<div class=sm style=text-align:${l[0]?'right':'left'}>${l[0]?'🧑 คุณ':N.t.e+' '+esc(N.nm.split(' ')[0].replace('นักลงทุน',''))||'เจ้าของ'}: ${esc(l[1])}</div>`});
+if(N.done)h+=`<div class=sm style=color:#e8a33d;margin-top:6px>${esc(N.res)}</div><div class=bt><button id=nb class=gb>กลับไปรายการบริษัท</button></div></div>`;
+else h+=`<div class=sm style=margin-top:6px>${buy?'ราคาที่เจ้าของขอ':'ราคาที่ผู้ซื้อให้'} <b>฿${nf(N.ask)}</b></div><div class=px>คุณ${buy?'เสนอ':'ขอ'} ฿${nf(N.off)}</div><div class=sp>${[-10,-5,-1,1,5,10].map(p=>`<button class=ob data-st=${p}>${p>0?'+':''}${p}%</button>`).join('')}<button class=ob data-mk=1>ราคาตลาด</button></div><div class=bt><button class=gb data-go=offer>${buy?'เสนอราคา':'ยื่นข้อเสนอ'} ฿${nf(N.off)}</button><button class=rb data-go=accept>ตกลงตามราคาเขา ฿${nf(N.ask)}</button><button class=ob data-go=leave>ถอนตัว</button></div></div>`;
+h+=`<div class=row style=width:100%;max-width:560px><button id=ck>ปิด</button></div>`;el.innerHTML=h;el.hidden=false}
+function showCmp(){const el=$('cmp'),sc=el.scrollTop;mkSync();S.co=S.co||{};if(NEG){renderNeg(el);return}const H=S.d*24+S.t;let own=0,pay=0;for(const k in S.co){own++;pay+=Math.round(cval(+k)*.2)}
+let h=`<div class=card style=width:100%;max-width:980px><b>🏢 ซื้อขายกิจการบริษัท</b><div class=sm>💰 เงินสด ฿${nf(S.$)} · ถือ ${own} บริษัท · รอบถัดไปจ่ายรวมประมาณ ฿${nf(pay)}</div><div class=sm>จ่าย 20% ของมูลค่าปัจจุบัน ทุก 48 ชม.ในเกม · 🤝 เจรจาได้ราคาดีกว่า · ⚡ ซื้อทันที +10% / ขายทันที -10%</div>${CMSG?`<div class=sm style=color:#e8a33d>${esc(CMSG)}</div>`:''}</div><div class=w>`;
+COM.forEach((c,i)=>{const v=cval(i),o=S.co[i],ch=(v/c.b-1)*100,t=TRT[i%5];h+=`<div class=card><b>${c.e} ${c.n}</b><div class='px ${ch>=0?'up':'dn'}'>฿${nf(v)}</div><div class=sm>👤 เจ้าของ${o?'เดิม':''}: ${esc(OWN[i])} ${t.e} (${t.n})</div><div class=sm>ราคาตั้งต้น ฿${nf(c.b)} · <span class=${ch>=0?'up':'dn'}>${ch>=0?'▲ +':'▼ '}${ch.toFixed(0)}%</span> · ผูกกับหุ้น ${STK[c.j].id}</div><div class=sm>💸 จ่ายครั้งละ ฿${nf(Math.round(v*.2))}${o?` · ถัดไปอีก ${Math.max(0,Math.ceil(o.n-H))} ชม. · รับแล้วรวม ฿${nf(o.paid)} · ซื้อมา ฿${nf(o.cost||0)}`:''}</div><div class=bt>${o?`<button class=rb data-n=sell data-i=${i}>🤝 เจรจาขาย</button><button class=ob data-s=${i}>⚡ ขายทันที ฿${nf(Math.round(v*.9))}</button>`:`<button class=gb data-n=buy data-i=${i}>🤝 เจรจาซื้อ</button><button class=ob data-b=${i}>⚡ ซื้อทันที ฿${nf(Math.round(v*1.1))}</button>`}</div></div>`});
+h+=`</div><div class=row style=width:100%;max-width:980px><button id=ck>ปิด</button><button id=cs>📈 หุ้น</button></div>`;el.innerHTML=h;el.scrollTop=sc;el.hidden=false}
+$('cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+if(b.id==='ck'){$('cmp').hidden=true;NEG=null;return}if(b.id==='cs'){$('cmp').hidden=true;NEG=null;MSG='';showStk();return}
+if(d.b!==undefined)dealBuy(+d.b,Math.round(cval(+d.b)*1.1));else if(d.s!==undefined)dealSell(+d.s,Math.round(cval(+d.s)*.9));else if(d.n!==undefined)startNeg(+d.i,d.n);
+else if(d.st!==undefined&&NEG)NEG.off=Math.max(1,Math.round(NEG.off+cval(NEG.i)*(+d.st)/100));else if(d.mk&&NEG)NEG.off=cval(NEG.i);else if(d.go&&NEG)negGo(d.go);else if(b.id==='nb'){NEG=null;CMSG=''}
+showCmp()};
+[['ACME','เอซีเอ็ม เทคโนโลยี',180,.022,'US'],['FRDM','ฟรีดอม ออโต้',90,.02,'US'],['BYTE','ไบต์ คลาวด์',300,.028,'US'],['SAKU','ซากุระ โรบอติกส์',420,.018,'JP'],['KAIZ','ไคเซ็น มอเตอร์',150,.014,'JP'],['ANIM','อนิเมะ สตูดิโอ',75,.03,'JP'],['DRGN','มังกร โฮลดิ้ง',55,.03,'HK'],['JADE','หยก เรียลเอสเทท',30,.024,'HK'],['TEA9','ชาเก้า เครื่องดื่ม',22,.02,'HK']].forEach(a=>{const s={id:a[0],n:a[1],p:a[2],v:a[3],m:a[4],u:.00025};s.b=s.p;s.h=[s.p];STK.push(s)});
+const MKS=[['TH','🇹🇭','ไทย'],['US','🇺🇸','สหรัฐ'],['JP','🇯🇵','ญี่ปุ่น'],['HK','🇭🇰','ฮ่องกง']];let MK='TH',TAB='t';const mkOf=s=>s.m||'TH';
+function trade(i,a){const s=STK[i];S.pf=S.pf||{};S.sh=S.sh||{};const pf=S.pf,sh=S.sh;let hd=pf[s.id];const cp=Math.max(1,Math.ceil(s.p));
+if(a[0]==='b'){const n=a==='b10'?10:a==='bm'?Math.floor(S.$/cp):1,cost=Math.ceil(s.p*n);if(n<1||S.$<cost){MSG='เงินไม่พอ';return}S.$-=cost;hd=pf[s.id]=hd||{q:0,c:0};hd.q+=n;hd.c+=cost;MSG='ซื้อขาขึ้น '+s.id+' '+nf(n)+' หุ้น ฿'+nf(cost)}
+else if(a==='s1'||a==='sa'||a==='sh'){const n=a==='sa'?(hd?hd.q:0):a==='sh'?(hd?Math.max(1,Math.floor(hd.q/2)):0):1;if(!hd||!n||hd.q<n){MSG='ไม่มีหุ้นให้ขาย';return}const rev=Math.floor(s.p*n),cp2=hd.c*n/hd.q;ST.pl=(ST.pl||0)+rev-cp2;S.$+=rev;hd.q-=n;hd.c-=cp2;if(hd.q<=0)delete pf[s.id];MSG='ขาย '+s.id+' '+nf(n)+' หุ้น ได้ ฿'+nf(rev)}
+else if(a==='h1'||a==='h10'||a==='hm'){const n=a==='h10'?10:a==='hm'?Math.floor(S.$/cp):1,need=Math.ceil(s.p*n);if(n<1||S.$<need){MSG='เงินประกันไม่พอ';return}S.$-=need;const o=sh[s.id]=sh[s.id]||{q:0,e:0};o.q+=n;o.e+=need;MSG='เปิดชอร์ต '+s.id+' '+nf(n)+' หุ้น (ประกัน ฿'+nf(need)+')'}
+else if(a==='hc'){const o=sh[s.id];if(!o){MSG='ไม่มีสถานะชอร์ต';return}const eq=Math.max(0,Math.round(2*o.e-o.q*s.p));ST.pl=(ST.pl||0)+eq-o.e;S.$+=eq;MSG='ปิดชอร์ต '+s.id+' ได้คืน ฿'+nf(eq)+' ('+(eq>=o.e?'+':'')+nf(eq-o.e)+')';delete sh[s.id]}
+ST.tr=(ST.tr||0)+1;sfx('click');hud()}
+function showStk(){const el=$('stk');mkSync();S.pf=S.pf||{};S.sh=S.sh||{};const lc=el.querySelector('.l'),rc=el.querySelector('.rr'),s1=lc?lc.scrollTop:0,s2=rc?rc.scrollTop:0;
+const list=STK.map((x,i)=>[x,i]).filter(a=>mkOf(a[0])===MK);if(mkOf(STK[SEL])!==MK)SEL=list.length?list[0][1]:0;const s=STK[SEL],FC=DEV?peek(10):null,pfv=Math.round(pfVal());
+let h=`<div class=tp><div class=mt>${MKS.map(m=>`<button class='${m[0]===MK?'gb on':'ob'}' data-m=${m[0]}>${m[1]} ${m[2]}</button>`).join('')}</div><span class=sm>💰฿${nf(S.$)} · 💼฿${nf(pfv)}</span><button id=sc class=ob>🏢 บริษัท</button><button id=sk class=rb>✕ ปิด</button></div>${Date.now()-DEVAT<9000?`<div class=sm style='width:100%;max-width:980px;color:#e8a33d;margin-bottom:4px'>${esc(DEVTXT)}</div>`:''}<div class=w>`;
+let L='';list.forEach(([x,i])=>{const pv=x.h[Math.max(0,x.h.length-61)],c=(x.p/pv-1)*100,lo=S.pf[x.id],so=S.sh[x.id];L+=`<div class='it${i===SEL?' on':''}' style='border-left:5px solid ${c>=0?'#2e9b5a':'#d9534f'}' data-sel=${i}><div><b>${x.id}</b> <span class=${c>=0?'up':'dn'}>${c>=0?'▲':'▼'}${Math.abs(c).toFixed(1)}%</span><br><span class=sm>฿${x.p.toFixed(2)}${lo?' · 📈'+lo.q:''}${so?' · 📉'+so.q:''}${FC?` · 🔮${FC[i]>=x.p?'▲':'▼'}${(Math.abs(FC[i]/x.p-1)*100).toFixed(0)}%`:''}</span></div><div>${spark(x.h)}</div></div>`});
+const lo=S.pf[s.id],so=S.sh[s.id],pv=s.h[Math.max(0,s.h.length-61)],c=(s.p/pv-1)*100,lp=lo?Math.round(s.p*lo.q-lo.c):0,hp=so?Math.round(so.e-s.p*so.q):0,cls=c>=0?'up':'dn',fl=(MKS.find(m=>m[0]===mkOf(s))||[])[1]||'';
+let R=`<div class=tabs><button class='${TAB==='t'?'gb':'ob'}' data-tab=t>💹 ซื้อขาย</button><button class='${TAB==='x'?'gb':'ob'}' data-tab=x>🛠 เครื่องมือ (หยุดขาดทุน/AI)</button></div>`;
+if(TAB==='t')R+=`<div class=card><div class=th><div><b>${fl} ${s.id}</b> <span class=sm>${esc(s.n)}</span></div><div class='px ${cls}'>฿${s.p.toFixed(2)} <span class=${cls}>${c>=0?'▲':'▼'}${Math.abs(c).toFixed(1)}%</span></div></div>${chart(s,360,84)}<div class=sm>${per(s,20,'1 นาที')} · ${per(s,100,'5 นาที')}</div><div class=pos>📈 ${lo?`ถือ ${nf(lo.q)} · ทุน ฿${(lo.c/lo.q).toFixed(1)} · <span class=${lp>=0?'up':'dn'}>${lp>=0?'+':''}${nf(lp)}</span>`:'ไม่มีขาขึ้น'} &nbsp; 📉 ${so?`ชอร์ต ${nf(so.q)} · เข้า ฿${(so.e/so.q).toFixed(1)} · <span class=${hp>=0?'up':'dn'}>${hp>=0?'+':''}${nf(hp)}</span>`:'ไม่มีขาลง'}</div></div><div class=card><div class=tb><div class=g><b class=up>📈 ขาขึ้น (ซื้อ)</b><div class=bt><button class=gb data-a=b1>ซื้อ 1</button><button class=gb data-a=b10>ซื้อ 10</button><button class=gb data-a=bm>ซื้อสุด</button><button class=ob data-a=s1>ขาย 1</button><button class=ob data-a=sh>ขายครึ่ง</button><button class=ob data-a=sa>ขายหมด</button></div></div><div class=g><b class=dn>📉 ขาลง (ชอร์ต)</b><div class=bt><button class=rb data-a=h1>เปิด 1</button><button class=rb data-a=h10>เปิด 10</button><button class=rb data-a=hm>เปิดสุด</button><button class=ob data-a=hc>ปิดสถานะ</button></div></div></div>${MSG?`<div class=sm style=color:#e8a33d>${esc(MSG)}</div>`:''}</div>`;
+else R+=slAi(s)+`<div class=card><div class=sm>${NEWS.length?NEWS.slice(-3).map(esc).join('<br>'):'ยังไม่มีข่าว'}</div>${MSG?`<div class=sm style=color:#e8a33d>${esc(MSG)}</div>`:''}</div>`;
+h+=`<div class=l>${L}</div><div class=rr>${R}</div></div>`;el.innerHTML=h;const l2=el.querySelector('.l'),r2=el.querySelector('.rr');if(l2)l2.scrollTop=s1;if(r2)r2.scrollTop=s2;el.hidden=false}
+$('stk').onclick=e=>{const it=e.target.closest('[data-sel]');if(it){SEL=+it.dataset.sel;showStk();return}const b=e.target.closest('button');if(!b)return;const d=b.dataset;if(b.id==='sk'){$('stk').hidden=true;return}if(b.id==='sc')return;
+if(d.m){MK=d.m;showStk();return}if(d.tab){TAB=d.tab;showStk();return}
+if(d.sl!==undefined){S.slc=S.slc||{};const id=STK[SEL].id;S.slc[id]=+d.sl;MSG=+d.sl>0?'ตั้งหยุดขาดทุน '+id+' ที่ -'+d.sl+'%':'ปิดหยุดขาดทุน '+id;showStk();return}
+if(d.ai){mkSync();runAI(STK[SEL]);showStk();return}if(d.a){trade(SEL,d.a);showStk()}};
+let DEVTXT='',DEVAT=0;
+[['NRTC','เนร์ร่า เทคโนโลยี',260,.03],['NRDF','เนร์ร่า ดีเฟนส์ (อุปกรณ์ทหาร)',190,.026],['NRRK','เนร์ร่า ร็อกเก็ต แมททีเรียล (วัตถุสร้างจรวด)',140,.04],['NRSP','เนร์ร่า สเปซ ลอจิสติกส์',95,.035],['NRQT','ควอนตัม ดาต้า เนร์ร่า',330,.045],['NREN','เนร์ร่า ฟิวชัน เอ็นเนอยี',60,.038],['NRMN','เนร์ร่า แร่หายาก',45,.032]].forEach(a=>{const s={id:a[0],n:a[1],p:a[2],v:a[3],m:'NR',u:.0003};s.b=s.p;s.h=[s.p];STK.push(s)});MKS.push(['NR','🚀','เนร์ร่า']);
+OWN.push('Mr. Daniel Ross','คุณทานากะ ฮิโรชิ','คุณหลี่ เหว่ย','ท่านเนร์ราน อาร์ดัส','Ms. Emily Carter','คุณซาโตะ ยูกิ','คุณเฉิน ซือเหยียน','ท่านไคร่า โวลเทน','Mr. James Whitfield','คุณยามาดะ เคนจิ','คุณหวง ไห่','ท่านเซร่า มอร์ริส','Ms. Olivia Grant','คุณฮายาชิ มิกิ','คุณหลิว เจียหมิง','ท่านออร์ล็อก เนร์รัน','Mr. Henry Baxter','คุณโมริ ทาคาชิ','ท่านทาเลีย ไอรอนวูด','Ms. Sophia Hale','คุณคาวาซากิ อาโอเอะ','ท่านไวเรน สตาร์ฟอลล์','ท่านซาเฟียร์ โนวา','ประธานาธิบดีแห่งเนร์ร่า ท่านอัลเดอร์ คอร์เนอร์');
+[['🛰','ออร์บิทัล คอมมิวนิเคชัน','US',6],['🤖','ซากุระ โรบอติกส์ กรุ๊ป','JP',9],['🐉','มังกร โฮลดิ้ง กรุ๊ป','HK',12],['🚀','เนร์ร่า เทคโนโลยี คอร์ป','NR',15],['🛒','เครือค้าปลีกอเมริกันดรีม','US',7],['🚗','ไคเซ็น ออโต้ เวิร์คส์','JP',10],['🏙','หยก พร็อพเปอร์ตี้','HK',13],['🛡','เนร์ร่า ดีเฟนส์ ซิสเต็มส์','NR',16],['🏦','ธนาคารวอลล์สตรีท','US',6],['🎌','อนิเมะ เอ็นเตอร์เทนเมนต์','JP',11],['⚓','ท่าเรือคอนเทนเนอร์ฮ่องกง','HK',14],['🔥','เนร์ร่า ร็อกเก็ต เอ็นจิ้น','NR',17],['☁','ไบต์ คลาวด์ กรุ๊ป','US',8],['🚄','ชินคันเซ็น เรลเวย์','JP',10],['💱','ธนาคารวิคตอเรียฮาร์เบอร์','HK',12],['🌌','เนร์ร่า สเปซพอร์ต','NR',18],['🎞','สตูดิโอฮอลลีวูด','US',7],['💾','โรงงานเซมิคอนดักเตอร์โตเกียว','JP',11],['⚛','เนร์ร่า ควอนตัม แล็บ','NR',19],['🛢','บริษัทน้ำมันเท็กซัส','US',8],['🏭','โตเกียว เฮฟฟี่ อินดัสตรี','JP',9],['⚡','เนร์ร่า ฟิวชัน พาวเวอร์','NR',20],['💎','เนร์ร่า แร่หายาก ไมนิ่ง','NR',21],['👑','สหพันธ์เนร์ร่า โฮลดิ้ง (ยักษ์ใหญ่)','NR',15]].forEach((c,k)=>{let b=12e9*Math.pow(190e12/12e9,k/23);const m=Math.pow(10,Math.floor(Math.log10(b))-2);b=Math.round(b/m)*m;if(k===23)b=190e12;COM.push({e:c[0],n:c[1],r:c[2],j:c[3],b})});
+const MW=2560,MH=1300,GR4=Array.from({length:1100},(_,i)=>[(i*97)%MW,(i*61+i*i)%MH]),FL={TH:'🇹🇭',US:'🇺🇸',JP:'🇯🇵',HK:'🇭🇰',NR:'🚀'};
+const TR3=[[1925,235],[1925,430],[2240,235],[2540,235],[2540,430],[1930,500],[2240,520],[2540,520],[1925,760],[2240,760],[2540,760],[1700,730],[1900,860],[2100,860],[2300,860],[2500,860],[60,1030],[300,1030],[560,1030],[800,1030],[1040,1030],[1280,1030],[1520,1030],[1760,1030],[2000,1030],[2240,1030],[2500,1030],[1400,780],[1650,800]];
+Object.assign(Z,{clothes:{x:1680,y:540,w:200,h:140,n:'ร้านเสื้อผ้า',c:'#e6c0d6'},airport:{x:1960,y:50,w:260,h:130,n:'สนามบิน',c:'#cfd8e4'},spaceport:{x:2260,y:50,w:260,h:130,n:'ฐานปล่อยจรวดเนร์ร่า',c:'#d8cfcf'},museum:{x:1960,y:260,w:260,h:170,n:'พิพิธภัณฑ์',c:'#e0d6bc'},waterpark:{x:2260,y:260,w:240,h:170,n:'สวนน้ำ',c:'#bfe0ea'},onsen:{x:1960,y:540,w:260,h:170,n:'ออนเซ็น',c:'#e4d2c0'}});
+Object.assign(ROOF,{clothes:'#c06090',airport:'#3a5a8a',spaceport:'#7a3a3a',museum:'#6a5a3a',waterpark:'#3a8aaa',onsen:'#8a5a3a'});
+let WDS=false,WTAB='c',WCAT='top',WMSG='',PV=null;
+const WCN={top:'👕 เสื้อ',bottom:'👖 กางเกง/กระโปรง',hat:'🎩 หมวก',shoes:'👟 รองเท้า',acc:'🕶 เครื่องประดับ'};
+const WI={top:[{id:'t0',n:'เสื้อยืดพื้นฐาน',p:0},{id:'t1',n:'เสื้อยืดสีฟ้า',p:200,c:'#4a90d9'},{id:'t2',n:'ฮู้ดดี้เทา',p:600,c:'#8a8f98',st:'hood'},{id:'t3',n:'เสื้อเจอร์ซีย์แดง',p:900,c:'#d9534f',st:'stripe'},{id:'t4',n:'สูทดำ',p:5000,c:'#22252b',st:'suit'},{id:'t5',n:'ชุดกิโมโน',p:12000,c:'#a63d6a',st:'kimono'},{id:'t6',n:'ชุดมหาราชา',p:250000,c:'#e0b030',st:'royal'}],
+bottom:[{id:'b0',n:'กางเกงขายาวพื้นฐาน',p:0,c:'#3b3a44'},{id:'b1',n:'ยีนส์',p:300,c:'#3f5f8a'},{id:'b2',n:'กางเกงขาสั้น',p:150,c:'#c9a45c',st:'short'},{id:'b3',n:'กระโปรง',p:350,c:'#b85c8a',st:'skirt'},{id:'b4',n:'กางเกงสูท',p:3000,c:'#22252b'},{id:'b5',n:'กางเกงทอง',p:100000,c:'#e0b030'}],
+hat:[{id:'h0',n:'ไม่สวมหมวก',p:0},{id:'h1',n:'หมวกแก๊ป',p:120,c:'#d9534f',st:'cap'},{id:'h2',n:'หมวกไหมพรม',p:200,c:'#4a90d9',st:'beanie'},{id:'h3',n:'หมวกสาน',p:180,c:'#d9b96a',st:'straw'},{id:'h4',n:'หมวกทรงสูง',p:4000,c:'#22252b',st:'top'},{id:'h5',n:'มงกุฏ',p:5000000,c:'#f0c030',st:'crown'}],
+shoes:[{id:'s0',n:'รองเท้าผ้าใบพื้นฐาน',p:0,c:'#f0f0f0'},{id:'s1',n:'บูท',p:600,c:'#6b4a32'},{id:'s2',n:'รองเท้าสีแดง',p:400,c:'#d9534f'},{id:'s3',n:'รองเท้าทอง',p:50000,c:'#e0b030'}],
+acc:[{id:'a0',n:'ไม่มีเครื่องประดับ',p:0},{id:'a1',n:'แว่นตา',p:150,st:'glasses'},{id:'a2',n:'แว่นกันแดด',p:400,st:'sun'},{id:'a3',n:'ผ้าคลุมซุปเปอร์ฮีโร่',p:20000,c:'#d9534f',st:'cape'},{id:'a4',n:'ปีกนางฟ้า',p:500000,c:'#f5f5ff',st:'wings'}]};
+const SKIN=['#f3d3b5','#e0ac80','#c58c5f','#8d5a3b'],HAIRN=['ผมสั้น','ผมยาว','ผมมัดจุก','ผมหยิก'];
+function wd(){return S.wd||(S.wd={own:{t0:1,b0:1,h0:1,s0:1,a0:1},wear:{top:'t0',bottom:'b0',hat:'h0',shoes:'s0',acc:'a0'}})}
+function otArr(){const w=wd().wear,a=S.av||{};return [w.top,w.bottom,w.hat,w.shoes,w.acc,a.h|0,a.s|0]}
+function Rk(k,x,y,w,h,r,c){k.fillStyle=c;k.beginPath();k.roundRect(x,y,w,h,r);k.fill()}
+function drawChar(k,x,y,ot,mv,sc,bc){const f=(a,id)=>WI[a].find(i=>i.id===id)||WI[a][0],tp=f('top',ot[0]),bt=f('bottom',ot[1]),ht=f('hat',ot[2]),sh=f('shoes',ot[3]),ac=f('acc',ot[4]),sk=SKIN[ot[6]|0]||SKIN[0],hr=ot[5]|0,b=mv?Math.sin(tick/3)*2:0,tc=tp.c||bc||'#c8553d',by=b/3;
+k.save();k.translate(x,y);k.scale(sc||1,sc||1);k.fillStyle='rgba(0,0,0,.2)';k.beginPath();k.ellipse(0,9,9,4,0,0,7);k.fill();
+if(ac.st==='cape'){k.fillStyle=ac.c;k.beginPath();k.moveTo(-6,-9);k.lineTo(6,-9);k.lineTo(10,9);k.lineTo(-10,9);k.closePath();k.fill()}
+if(ac.st==='wings'){k.fillStyle=ac.c;k.beginPath();k.ellipse(-11,-6,6,12,-.4,0,7);k.fill();k.beginPath();k.ellipse(11,-6,6,12,.4,0,7);k.fill()}
+const bare=bt.st==='short'||bt.st==='skirt';k.fillStyle=bare?sk:bt.c;k.fillRect(-5,2,4,8+b/2);k.fillRect(1,2,4,8-b/2);
+if(bt.st==='short'){k.fillStyle=bt.c;k.fillRect(-5,2,4,4);k.fillRect(1,2,4,4)}
+if(bt.st==='skirt'){k.fillStyle=bt.c;k.beginPath();k.moveTo(-7,1);k.lineTo(7,1);k.lineTo(9,7);k.lineTo(-9,7);k.closePath();k.fill()}
+k.fillStyle=sh.c||'#f0f0f0';k.fillRect(-6,9+b/2,5,3);k.fillRect(1,9-b/2,5,3);
+if(tp.st==='hood'){k.fillStyle=tc;k.beginPath();k.arc(0,-10+by,6,0,7);k.fill()}
+Rk(k,-9,-9+by,3,9,1.5,tc);Rk(k,6,-9+by,3,9,1.5,tc);k.fillStyle=sk;k.fillRect(-9,by,3,2);k.fillRect(6,by,3,2);Rk(k,-7,-10+by,14,15,4,tc);
+if(tp.st==='stripe'){k.fillStyle='#fff';for(let i=0;i<3;i++)k.fillRect(-7,-8+by+i*4,14,1.5)}
+if(tp.st==='suit'){k.fillStyle='#fff';k.beginPath();k.moveTo(-3,-10+by);k.lineTo(3,-10+by);k.lineTo(0,-3+by);k.closePath();k.fill();k.fillStyle='#d9534f';k.fillRect(-.8,-8+by,1.6,6)}
+if(tp.st==='kimono'){k.fillStyle='#f5e6c8';k.fillRect(-7,-2+by,14,3)}
+if(tp.st==='royal'){k.strokeStyle='#fff3b0';k.lineWidth=1.5;k.strokeRect(-6.2,-9.2+by,12.4,13.4)}
+k.fillStyle=sk;k.beginPath();k.arc(0,-15+by,6.5,0,7);k.fill();k.fillStyle='#3a2c24';
+if(hr===1){k.fillRect(-7.5,-19+by,3,13);k.fillRect(4.5,-19+by,3,13)}
+if(hr===3){for(let i=-2;i<=2;i++){k.beginPath();k.arc(i*3.2,-20+by,3.2,0,7);k.fill()}}
+if(hr===2){k.beginPath();k.arc(0,-24+by,3.4,0,7);k.fill()}
+k.beginPath();k.arc(0,-17+by,6.7,3.14,6.28);k.fill();k.fillStyle='#222';k.fillRect(-3,-15.5+by,1.4,1.8);k.fillRect(1.6,-15.5+by,1.4,1.8);
+const hy=-18+by;
+if(ht.st==='cap'){k.fillStyle=ht.c;k.beginPath();k.arc(0,hy,6.9,3.14,6.28);k.fill();k.fillRect(0,hy-1,9,2)}
+if(ht.st==='beanie'){k.fillStyle=ht.c;k.beginPath();k.arc(0,hy+.5,7,3.14,6.28);k.fill();k.fillRect(-7,hy,14,2.2)}
+if(ht.st==='straw'){k.fillStyle=ht.c;k.beginPath();k.ellipse(0,hy+1,11,2.6,0,0,7);k.fill();k.beginPath();k.arc(0,hy,6,3.14,6.28);k.fill()}
+if(ht.st==='top'){k.fillStyle=ht.c;k.fillRect(-4.5,hy-9,9,9);k.fillRect(-8,hy,16,1.8)}
+if(ht.st==='crown'){k.fillStyle=ht.c;k.beginPath();k.moveTo(-6,hy+1);k.lineTo(-6,hy-7);k.lineTo(-3,hy-3);k.lineTo(0,hy-8);k.lineTo(3,hy-3);k.lineTo(6,hy-7);k.lineTo(6,hy+1);k.closePath();k.fill()}
+if(ac.st==='glasses'){k.strokeStyle='#222';k.lineWidth=.8;k.strokeRect(-4.6,-16.5+by,3.8,3);k.strokeRect(.8,-16.5+by,3.8,3)}
+if(ac.st==='sun'){k.fillStyle='#111';k.fillRect(-4.8,-16.5+by,4,3);k.fillRect(.8,-16.5+by,4,3)}
+k.restore()}
+function person(x,y,c,n,say,mv,ot){drawChar(g,x,y,ot||otArr(),mv,1,c);g.font='bold 11px system-ui';g.textAlign='center';const w=g.measureText(n).width+10;rr(x-w/2,y+14,w,16,8,'rgba(30,30,30,.65)');g.fillStyle='#fff';g.fillText(n,x,y+26);if(say){const s=say.slice(0,22),w2=g.measureText(s).width+14;rr(x-w2/2,y-56,w2,20,8,'#fffdf8');g.fillStyle='#2b2a27';g.fillText(s,x,y-42)}}
+function drawPv(){const c2=$('wc');if(!c2)return;const k=c2.getContext('2d');k.fillStyle='#e9e4d4';k.fillRect(0,0,300,380);const ot=otArr();if(PV)ot[{top:0,bottom:1,hat:2,shoes:3,acc:4}[PV.c]]=PV.id;drawChar(k,150,250,ot,false,6,col)}
+function showWd(){const el=$('wd');wd();S.av=S.av||{h:0,s:0};const w=S.wd;
+let h=`<div class=tp><div class=mt>${[['c','👕 ตู้เสื้อผ้า'],['s','🛍 ร้านเสื้อผ้า'],['a','🧑 ตัวละคร']].map(t=>`<button class='${WTAB===t[0]?'gb on':'ob'}' data-wt=${t[0]}>${t[1]}</button>`).join('')}</div><span class=sm>💰฿${nf(S.$)}</span><button id=wx class=rb>✕ ปิด</button></div><div class=w2><div class=pv><canvas id=wc width=300 height=380></canvas><div class=sm style=color:var(--fg)>${esc(name)}</div></div><div class=ls>`;
+if(WTAB==='a'){h+=`<b>ทรงผม</b><div class=cats>${HAIRN.map((t,i)=>`<button class='${(S.av.h|0)===i?'gb':'ob'}' data-hs=${i}>${t}</button>`).join('')}</div><b>สีผิว</b><div class=cats>${SKIN.map((c,i)=>`<button class='${(S.av.s|0)===i?'gb':'ob'}' data-ss=${i}>ผิว ${i+1}</button>`).join('')}</div>`}
+else if(WTAB==='s'&&!WDS)h+=`<div class=sm>ไปที่ร้านเสื้อผ้า (อยู่ทางขวาของแผนที่) เพื่อซื้อเสื้อผ้า</div>`;
+else{h+=`<div class=cats>${Object.keys(WCN).map(c=>`<button class='${WCAT===c?'gb':'ob'}' data-wc=${c}>${WCN[c]}</button>`).join('')}</div>`;
+WI[WCAT].forEach(it=>{const own=w.own[it.id],on=w.wear[WCAT]===it.id;if(WTAB==='c'&&!own)return;h+=`<div class='wi${on?' on':''}' data-pv=${it.id}><span>${it.n}${WTAB==='s'&&!own?' · ฿'+nf(it.p):''}</span>${WTAB==='c'?`<button class='${on?'gb':'ob'}' data-wear=${it.id}>${on?'✓ สวมอยู่':'สวมใส่'}</button>`:own?`<span class=sm>มีแล้ว</span>`:`<button class=gb data-buy=${it.id}>ซื้อ ฿${nf(it.p)}</button>`}</div>`})}
+if(WMSG)h+=`<div class=sm style=color:#e8a33d>${esc(WMSG)}</div>`;h+='</div></div>';el.innerHTML=h;el.hidden=false;drawPv()}
+function buyItem(id){const it=WI[WCAT].find(i=>i.id===id),w=wd();if(!it||w.own[id])return;if(S.$<it.p){WMSG='เงินไม่พอ';return}S.$-=it.p;w.own[id]=1;w.wear[WCAT]=id;WMSG='ซื้อ '+it.n+' แล้ว สวมให้เลย';sfx('coin');hud()}
+$('wd').onclick=e=>{const b=e.target.closest('button'),d=b?b.dataset:{};if(b&&b.id==='wx'){$('wd').hidden=true;PV=null;WDS=false;return}
+if(d.wt){WTAB=d.wt;PV=null}else if(d.wc){WCAT=d.wc;PV=null}else if(d.wear){if(wd().own[d.wear]){wd().wear[WCAT]=d.wear;PV=null;WMSG='เปลี่ยนชุดแล้ว'}}else if(d.buy)buyItem(d.buy);else if(d.hs!==undefined)S.av.h=+d.hs;else if(d.ss!==undefined)S.av.s=+d.ss;
+else{const r=e.target.closest('[data-pv]');if(!r)return;PV={c:WCAT,id:r.dataset.pv}}showWd()};
+$('wdb').onclick=()=>{WDS=false;WTAB='c';PV=null;WMSG='';showWd()};
+Object.assign(ACT,{clothes:[['👕 เข้าร้านเสื้อผ้า',open(10,22,()=>{WDS=true;WTAB='s';PV=null;WMSG='';showWd()})]],
+airport:[['✈ ท่องเที่ยวต่างประเทศ ฿20,000',open(6,22,()=>{if(S.$<20000)return toast('เงินไม่พอ');ch({$:-20000,m:60,e:-20,h:-15});adv(6)})]],
+spaceport:[['🚀 ชมการปล่อยจรวดเนร์ร่า ฿500',open(9,23,()=>{if(S.$<500)return toast('เงินไม่พอ');ch({$:-500,m:28,e:-4});adv(1.5)})]],
+museum:[['🖼 ชมนิทรรศการ ฿80',open(9,18,()=>{if(S.$<80)return toast('เงินไม่พอ');ch({$:-80,m:15,e:-5});adv(2)})]],
+waterpark:[['🌊 เล่นสวนน้ำ ฿300',open(10,19,()=>{if(S.$<300)return toast('เงินไม่พอ');if(S.e<20)return toast('ไม่มีแรง');ch({$:-300,m:28,e:-14,h:-8});adv(3)})]],
+onsen:[['♨ แช่ออนเซ็น ฿200',open(10,23,()=>{if(S.$<200)return toast('เงินไม่พอ');ch({$:-200,e:22,m:18});adv(2)})]]});
+function draw(){tick++;const tx=Math.max(0,Math.min(MW-640,S.x-320)),ty=Math.max(0,Math.min(MH-400,S.y-200));CAM.x+=(tx-CAM.x)*.15;CAM.y+=(ty-CAM.y)*.15;
+g.setTransform(2,0,0,2,0,0);g.fillStyle='#a9c98f';g.fillRect(0,0,640,400);g.translate(-CAM.x,-CAM.y);
+g.fillRect(0,0,MW,MH);g.fillStyle='#9dbf84';GR4.forEach(p=>g.fillRect(p[0],p[1],3,2));
+g.fillStyle='#efe0b0';g.fillRect(0,1160,MW,28);g.fillStyle='#7fb8d6';g.fillRect(0,1188,MW,MH-1188);g.fillStyle='rgba(255,255,255,.45)';for(let i=-70;i<MW;i+=70)g.fillRect(i+((tick>>1)%70),1215,30,3);
+g.fillStyle='#d2cab4';g.fillRect(0,196,MW,28);g.fillRect(0,450,MW,28);g.fillRect(0,790,MW,28);g.fillRect(498,0,32,478);g.fillRect(1262,0,32,818);g.fillRect(1930,0,32,818);
+g.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<MW;i+=28){g.fillRect(i,208,14,2);g.fillRect(i,462,14,2);g.fillRect(i,802,14,2)}for(let j=0;j<818;j+=28){if(j<478)g.fillRect(513,j,2,14);g.fillRect(1277,j,2,14);g.fillRect(1945,j,2,14)}
+const t=S.t,na=t<7?(7-t)*.2:t>18?Math.min(.5,(t-18)*.08):0,lit=na>.15;
+const pk=Z.park,px=pk.x+pk.w/2,py=pk.y+pk.h*.5;rr(pk.x,pk.y,pk.w,pk.h,18,'#86b06f');g.fillStyle='#8ec3d6';g.beginPath();g.ellipse(px,py,46,26,0,0,7);g.fill();rr(px-30,pk.y+pk.h-16,60,8,3,'#8a6b4c');zl(pk);
+const bc=Z.beach;rr(bc.x,bc.y,bc.w,bc.h,16,'#f0dfae');rr(bc.x,bc.y+bc.h-60,bc.w,60,16,'#7fb8d6');g.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<bc.w-40;i+=44)g.fillRect(bc.x+16+i,bc.y+bc.h-36,24,3);
+g.fillStyle='#d9534f';g.beginPath();g.arc(bc.x+90,bc.y+95,24,Math.PI,0);g.fill();g.fillStyle='#8a6b4c';g.fillRect(bc.x+89,bc.y+95,2,30);zl(bc,'#4a4033');
+let z=Z.forest;rr(z.x,z.y,z.w,z.h,16,z.c);for(let i=0;i<7;i++)tree(z.x+30+i*40,z.y+70+(i%3)*30);zl(z);
+z=Z.lake;rr(z.x,z.y,z.w,z.h,16,z.c);g.fillStyle='#7fb8d6';g.beginPath();g.ellipse(z.x+z.w/2,z.y+z.h/2+8,72,48,0,0,7);g.fill();zl(z,'#2b2a27');
+z=Z.stadium;rr(z.x,z.y,z.w,z.h,16,z.c);g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(z.x+14,z.y+30,z.w-28,z.h-44);g.beginPath();g.moveTo(z.x+z.w/2,z.y+30);g.lineTo(z.x+z.w/2,z.y+z.h-14);g.stroke();zl(z);
+z=Z.orchard;rr(z.x,z.y,z.w,z.h,16,z.c);for(let i=0;i<6;i++)for(let j=0;j<3;j++){const a=z.x+34+i*46,b=z.y+60+j*38;g.fillStyle='#4f7d4a';g.beginPath();g.arc(a,b,11,0,7);g.fill();g.fillStyle='#d9534f';g.fillRect(a-3,b-2,3,3)}zl(z);
+['home','office','mall','hospital','gym','cafe','shop','library','market','school','funpark','bank','salon','pub','arcade','spa','exchange','dealer','realty','clothes','airport','spaceport','museum','waterpark','onsen','petshop'].forEach(k=>bld(k,lit));
+TR.forEach(p=>tree(p[0],p[1]));TR2.forEach(p=>tree(p[0],p[1]));TR3.forEach(p=>tree(p[0],p[1]));
+if(S.tx!=null){const k=(tick%40)/40,b=Math.sin(tick/5)*3;g.strokeStyle='rgba(255,255,255,'+(1-k)+')';g.lineWidth=2;g.beginPath();g.arc(S.tx,S.ty,5+k*14,0,7);g.stroke();g.fillStyle='#e8553d';g.beginPath();g.arc(S.tx,S.ty,3.5,0,7);g.fill();g.beginPath();g.moveTo(S.tx,S.ty-8+b);g.lineTo(S.tx-6,S.ty-20+b);g.lineTo(S.tx+6,S.ty-20+b);g.closePath();g.fill()}
+const zk=zoneOf(S.x,S.y);if(zk){const q=Z[zk];g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=3;g.beginPath();g.roundRect(q.x-3,q.y-3,q.w+6,q.h+6,12);g.stroke()}
+const now=Date.now(),L=[],mv=Math.hypot(S.x-lx,S.y-ly)>.3;lx=S.x;ly=S.y;
+L.push([S.y,()=>person(S.x,S.y,col,(CARE[S.car|0]||'')+name,now-(S.st||0)<6000?S.say:'',mv,otArr())]);
+peers.forEach(p=>{const q=p.presence;if(p.isMe||!q||q.x==null)return;const d=DP[p.peer]||(DP[p.peer]={x:q.x,y:q.y});const m=Math.hypot(q.x-d.x,q.y-d.y)>1.5;d.x+=(q.x-d.x)*.25;d.y+=(q.y-d.y)*.25;L.push([d.y,()=>person(d.x,d.y,q.c||'#888',(CARE[q.cr|0]||'')+(q.n||'เพื่อน'),now-(q.st||0)<6000?q.say:'',m,q.ot)])});
+npcDraw(L,now);L.sort((a,b)=>a[0]-b[0]).forEach(f=>f[1]());
+g.setTransform(2,0,0,2,0,0);if(na>0){g.fillStyle='rgba(18,28,70,'+na+')';g.fillRect(0,0,640,400)}
+const mx=502,my=8,K=20;rr(mx-3,my-3,134,71,6,'rgba(0,0,0,.4)');rr(mx,my,128,65,4,'#a9c98f');for(const k in Z){const q=Z[k];g.fillStyle=q.c;g.fillRect(mx+q.x/K,my+q.y/K,q.w/K,q.h/K)}
+peers.forEach(p=>{const q=p.presence;if(!p.isMe&&q&&q.x!=null){g.fillStyle=q.c||'#888';g.fillRect(mx+q.x/K-1.5,my+q.y/K-1.5,3,3)}});g.fillStyle='#fff';g.fillRect(mx+S.x/K-2,my+S.y/K-2,4,4);g.strokeStyle='#222';g.lineWidth=1;g.strokeRect(mx+S.x/K-2,my+S.y/K-2,4,4);
+g.strokeStyle='rgba(255,255,255,.7)';g.strokeRect(mx+CAM.x/K,my+CAM.y/K,640/K,400/K)}
+let CMK='ALL';const CR=[['ALL','🌍 ทั้งหมด'],['TH','🇹🇭 ไทย'],['US','🇺🇸 สหรัฐ'],['JP','🇯🇵 ญี่ปุ่น'],['HK','🇭🇰 ฮ่องกง'],['NR','🚀 เนร์ร่า']];
+function showCmp(){const el=$('cmp'),sc=el.scrollTop;mkSync();S.co=S.co||{};if(NEG){renderNeg(el);return}const Hh=S.d*24+S.t;let own=0,pay=0;for(const k in S.co){own++;pay+=Math.round(cval(+k)*.7)}
+let h=`<div class=tp><div class=mt>${CR.map(r=>`<button class='${CMK===r[0]?'gb on':'ob'}' data-r=${r[0]}>${r[1]}</button>`).join('')}</div><button id=cs class=ob>📈 หุ้น</button><button id=ck class=rb>✕ ปิด</button></div><div class=card style=width:100%;max-width:980px><b>🏢 ซื้อขายกิจการบริษัท (${COM.length} แห่ง)</b><div class=sm>💰 เงินสด ฿${nf(S.$)} · ถือ ${own} บริษัท · รอบถัดไปจ่ายรวมประมาณ ฿${nf(pay)}</div><div class=sm>จ่าย 70% ของมูลค่าปัจจุบัน ทุก 48 ชม.ในเกม · 🤝 เจรจาได้ราคาดีกว่า · ⚡ ซื้อทันที +10% / ขายทันที -10%</div>${CMSG?`<div class=sm style=color:#e8a33d>${esc(CMSG)}</div>`:''}</div><div class=w>`;
+COM.forEach((c,i)=>{if(CMK!=='ALL'&&(c.r||'TH')!==CMK)return;const v=cval(i),o=S.co[i],ch=(v/c.b-1)*100,t=TRT[i%5];h+=`<div class=card><b>${FL[c.r||'TH']} ${c.e} ${c.n}</b><div class='px ${ch>=0?'up':'dn'}'>฿${nf(v)}</div><div class=sm>👤 เจ้าของ${o?'เดิม':''}: ${esc(OWN[i]||'-')} ${t.e} (${t.n})</div><div class=sm>ราคาตั้งต้น ฿${nf(c.b)} · <span class=${ch>=0?'up':'dn'}>${ch>=0?'▲ +':'▼ '}${ch.toFixed(0)}%</span> · ผูกกับหุ้น ${STK[c.j].id}</div><div class=sm>💸 จ่ายครั้งละ ฿${nf(Math.round(v*.7))}${o?` · ถัดไปอีก ${Math.max(0,Math.ceil(o.n-Hh))} ชม. · รับแล้วรวม ฿${nf(o.paid)} · ซื้อมา ฿${nf(o.cost||0)}`:''}</div><div class=bt>${o?`<button class=rb data-n=sell data-i=${i}>🤝 เจรจาขาย</button><button class=ob data-s=${i}>⚡ ขายทันที ฿${nf(Math.round(v*.9))}</button>`:`<button class=gb data-n=buy data-i=${i}>🤝 เจรจาซื้อ</button><button class=ob data-b=${i}>⚡ ซื้อทันที ฿${nf(Math.round(v*1.1))}</button>`}</div></div>`});
+h+='</div>';el.innerHTML=h;el.scrollTop=sc;el.hidden=false}
+$('cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+if(b.id==='ck'){$('cmp').hidden=true;NEG=null;return}if(b.id==='cs'){$('cmp').hidden=true;NEG=null;MSG='';showStk();return}
+if(d.r){CMK=d.r}else if(d.b!==undefined)dealBuy(+d.b,Math.round(cval(+d.b)*1.1));else if(d.s!==undefined)dealSell(+d.s,Math.round(cval(+d.s)*.9));else if(d.n!==undefined)startNeg(+d.i,d.n);
+else if(d.st!==undefined&&NEG)NEG.off=Math.max(1,Math.round(NEG.off+cval(NEG.i)*(+d.st)/100));else if(d.mk&&NEG)NEG.off=cval(NEG.i);else if(d.go&&NEG)negGo(d.go);else if(b.id==='nb'){NEG=null;CMSG=''}
+showCmp()};
+if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(typeof r==='number'?r:((r&&r[0])||0),w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath()}}
+$('mk').onclick=()=>{const c=String(1000+Math.floor(Math.random()*9000));$('rm').value=c;$('mkmsg').textContent='🔑 รหัสห้องของคุณคือ '+c+' — กด "เริ่มเล่น" แล้วบอกเพื่อนใส่รหัสนี้ (เพื่อนเปิดลิงก์เกมเดียวกันบน iOS/Android แล้วใส่รหัสนี้)'};
+$('rm').addEventListener('input',()=>{$('rm').value=$('rm').value.replace(/\D/g,'').slice(0,4)});
+const PETT={dog:{e:'🐶',n:'สุนัข',p:3000,m:2,en:3,g:0,d:'ซื่อสัตย์ อารมณ์ +2 พลังงาน +3 ทุกวัน'},cat:{e:'🐱',n:'แมว',p:2500,m:3,en:0,g:0,d:'อารมณ์ +3 ทุกวัน'},hamster:{e:'🐹',n:'แฮมสเตอร์',p:800,m:1,en:0,g:0,d:'อารมณ์ +1 ทุกวัน'},rabbit:{e:'🐰',n:'กระต่าย',p:1500,m:2,en:0,g:0,d:'อารมณ์ +2 ทุกวัน'},parrot:{e:'🦜',n:'นกแก้ว',p:4000,m:1,en:0,g:60,d:'อารมณ์ +1 และหาเงินได้ ฿60 ทุกวัน'},turtle:{e:'🐢',n:'เต่า',p:1200,m:1,en:1,g:0,d:'อารมณ์ +1 พลังงาน +1 ทุกวัน'},horse:{e:'🐴',n:'ม้า',p:80000,m:3,en:8,g:0,d:'อารมณ์ +3 พลังงาน +8 ทุกวัน'},unicorn:{e:'🦄',n:'ยูนิคอร์น',p:5000000,m:8,en:10,g:2000,d:'อารมณ์ +8 พลังงาน +10 และเงิน ฿2,000 ทุกวัน'}};
+const RLN=['คนแปลกหน้า','คนรู้จัก','เพื่อน','เพื่อนสนิท','คนสำคัญ'];
+const NL=[['สวัสดี','อากาศดีนะ','เพิ่งเคยเห็นหน้ากันนะ'],['ว่าไง วันนี้เป็นไงบ้าง','เจอกันอีกแล้ว!','ช่วงนี้งานยุ่งไหม'],['ดีใจที่ได้คุยด้วยเสมอ','วันนี้มีอะไรสนุกเล่าให้ฟังหน่อย','เดี๋ยวไปกินข้าวด้วยกันนะ'],['เธอคือเพื่อนที่ดีมาก','ถ้ามีอะไรให้ช่วยบอกได้เสมอ','คิดถึงเลย!'],['เธอสำคัญกับฉันมากนะ 💖','มีเธออยู่ข้าง ๆ แล้วอุ่นใจ','ขอบคุณที่อยู่ด้วยกัน']];
+const NPCD=[
+{id:'n1',nm:'ป้าแมว ใจดี',em:'👵',rl:'คนรักแมวข้างบ้าน',bc:'#b85c8a',ot:['t0','b3','h3','s0','a0',2,1],pf:'m',pd:'อารมณ์ดีขึ้นทุกวัน',sch:[[6,'park'],[9,'cafe'],[17,'park']]},
+{id:'n2',nm:'ลุงสมชาย ครูเกษียณ',em:'👴',rl:'ครูเกษียณ ชอบอ่านหนังสือ',bc:'#6b8f71',ot:['t1','b0','h0','s1','a1',0,1],pf:'e',pd:'พลังงานเพิ่มทุกวัน',sch:[[6,'park'],[9,'library'],[17,'park']]},
+{id:'n3',nm:'หมอปิ่น',em:'👩‍⚕️',rl:'แพทย์โรงพยาบาล',bc:'#e8f0f4',ot:['t0','b4','h0','s0','a1',1,0],pf:'e',pd:'ดูแลสุขภาพ พลังงานเพิ่มทุกวัน',sch:[[7,'hospital'],[19,'cafe'],[22,'hospital']]},
+{id:'n4',nm:'โค้ชเก่ง',em:'🏋',rl:'เทรนเนอร์ยิม',bc:'#d9534f',ot:['t3','b2','h1','s2','a2',0,2],pf:'m',pd:'ให้กำลังใจ อารมณ์ดีทุกวัน',sch:[[6,'gym'],[19,'stadium'],[22,'gym']]},
+{id:'n5',nm:'เชฟต้น',em:'👨‍🍳',rl:'เชฟร้านดัง',bc:'#f0f0f0',ot:['t0','b0','h4','s0','a0',3,1],pf:'g',pd:'แบ่งรายได้ให้ทุก 5 วัน',sch:[[9,'cafe'],[17,'market']]},
+{id:'n6',nm:'ฝ้าย บาริสต้า',em:'☕',rl:'บาริสต้า',bc:'#8a6b4c',ot:['t1','b3','h0','s0','a0',1,0],pf:'m',pd:'กาแฟอร่อย อารมณ์ดีทุกวัน',sch:[[7,'cafe'],[18,'pub']]},
+{id:'n7',nm:'มายด์ นักข่าว',em:'📰',rl:'นักข่าวการเงิน',bc:'#4a5a78',ot:['t4','b4','h0','s0','a1',1,2],pf:'t',pd:'กระซิบทิปหุ้นทุกวัน (ต้องเป็นเพื่อนสนิท)',sch:[[8,'exchange'],[18,'pub']]},
+{id:'n8',nm:'วิชัย นายธนาคาร',em:'🏦',rl:'ผู้จัดการธนาคาร',bc:'#22252b',ot:['t4','b4','h4','s1','a1',0,0],pf:'p',pd:'รายได้จากงาน +3% ต่อระดับ',sch:[[9,'bank'],[17,'exchange'],[21,'bank']]},
+{id:'n9',nm:'ครูอ้อย',em:'👩‍🏫',rl:'ครูศูนย์ฝึกอาชีพ',bc:'#a63d6a',ot:['t0','b3','h0','s0','a1',2,1],pf:'p',pd:'รายได้จากงาน +3% ต่อระดับ',sch:[[8,'school'],[18,'library'],[21,'park']]},
+{id:'n10',nm:'น้องฟ้า',em:'🧒',rl:'นักเรียนช่างสงสัย',bc:'#4a90d9',ot:['t3','b2','h1','s2','a0',3,2],pf:'m',pd:'ความร่าเริง อารมณ์ดีทุกวัน',sch:[[8,'school'],[16,'museum'],[19,'park']]},
+{id:'n11',nm:'ท่านวิรัตน์ มหาเศรษฐี',em:'🤴',rl:'เศรษฐีผู้ใจกว้าง',bc:'#e0b030',ot:['t6','b5','h4','s3','a2',0,0],pf:'g',pd:'ให้เงินก้อนใหญ่ทุก 5 วัน',sch:[[9,'mall'],[14,'airport'],[19,'spa']]},
+{id:'n12',nm:'เรน นักบินเนร์ร่า',em:'🧑‍🚀',rl:'นักบินอวกาศจากเนร์ร่า',bc:'#7a3a3a',ot:['t2','b1','h2','s1','a2',0,3],pf:'m',pd:'เล่าเรื่องดวงดาว อารมณ์ดีทุกวัน',sch:[[8,'spaceport'],[17,'airport'],[21,'spaceport']]}];
+Z.petshop={x:1540,y:860,w:170,h:130,n:'ร้านสัตว์เลี้ยง',c:'#e8d6b8'};ROOF.petshop='#8a6a3a';
+const NPS={},PS=[];let PT='rel',PMSG='',PADOPT=false;
+function rp(id){return (S.rel||{})[id]||0}
+function rlv(p){return p>=100?4:p>=60?3:p>=30?2:p>=10?1:0}
+function npcZone(n){let z=n.sch[0][1];for(const s of n.sch)if(S.t>=s[0])z=s[1];return z}
+const NSOL=['home','office','mall','hospital','gym','cafe','shop','library','market','school','funpark','bank','salon','pub','arcade','spa','exchange','dealer','realty','clothes','airport','spaceport','museum','waterpark','onsen','petshop'];
+function npcSolid(x,y){for(const k of NSOL){const z=Z[k];if(z&&x>z.x-6&&x<z.x+z.w+6&&y>z.y-4&&y<z.y+z.h+8)return true}return false}
+function npcPick(st,zk,now){const ks=Object.keys(Z),tour=Math.random()<.65;let z=Z[zk]||Z.park;if(tour)z=Z[ks[Math.floor(Math.random()*ks.length)]]||z;
+const solidZ=NSOL.indexOf(tour?ks.find(k=>Z[k]===z):zk)>=0;
+for(let a=0;a<12;a++){let x,y;if(solidZ){x=z.x+z.w/2+(Math.random()*2-1)*(z.w/2+90);y=z.y+z.h+12+Math.random()*110}else{x=z.x+Math.random()*z.w;y=z.y+Math.random()*z.h}
+x=Math.max(20,Math.min(2540,x));y=Math.max(20,Math.min(1140,y));
+if(!npcSolid(x,y)){st.wx=x;st.wy=y;st.sp=tour?2:1.5;st.t0=now;st.stk=0;return}}
+st.wx=null}
+function npcDraw(L,now){NPCD.forEach((n,i)=>{const zk=npcZone(n),z=Z[zk]||Z.park,st=NPS[n.id]||(NPS[n.id]={x:z.x+z.w/2+(i%5)*10,y:z.y+z.h+16,wx:null,wait:0,stk:0});
+if(st.zk!==zk){st.zk=zk;st.wx=z.x+24+((i*47)%Math.max(30,z.w-48));st.wy=zk==='park'?z.y+z.h*.7:z.y+z.h+18+(i%2)*10;st.sp=2.2;st.wait=0;st.stk=0;st.t0=now}
+const near=Math.hypot(st.x-S.x,st.y-S.y)<65||now-(st.sat||0)<3000;st.mv=false;
+if(!near){if(st.wx==null){if(!st.wait)st.wait=now+(Math.random()<.2?500+Math.random()*1300:0);if(now>=st.wait){st.wait=0;npcPick(st,zk,now)}}
+else{const dx=st.wx-st.x,dy=st.wy-st.y,d=Math.hypot(dx,dy);
+if(d<4||st.stk>30||now-st.t0>45000){st.wx=null;st.stk=0}
+else{const sp=Math.min(st.sp||1.1,d),vx=dx/d*sp,vy=dy/d*sp;
+if(!npcSolid(st.x+vx,st.y+vy)){st.x+=vx;st.y+=vy;st.mv=true;st.stk=0}
+else if(Math.abs(vx)>.05&&!npcSolid(st.x+vx,st.y)){st.x+=vx;st.mv=true;st.stk=0}
+else if(Math.abs(vy)>.05&&!npcSolid(st.x,st.y+vy)){st.y+=vy;st.mv=true;st.stk=0}
+else st.stk++}}}
+n.st=st;L.push([st.y,()=>person(st.x,st.y,n.bc,n.nm.split(' ')[0],now-(st.sat||0)<5000?st.say:'',st.mv,n.ot)])});
+(S.pets||[]).forEach((p,i)=>{const q=PS[i]||(PS[i]={x:S.x-16*(i+1),y:S.y+8}),tx=S.x-18*(i+1),ty=S.y+8;if(Math.hypot(tx-q.x,ty-q.y)>6){q.x+=(tx-q.x)*.07;q.y+=(ty-q.y)*.07}L.push([q.y,()=>{g.fillStyle='rgba(0,0,0,.18)';g.beginPath();g.ellipse(q.x,q.y+7,7,3,0,0,7);g.fill();g.font='16px serif';g.textAlign='center';g.fillStyle='#000';g.fillText(PETT[p.t].e,q.x,q.y+4)}])})}
+function nearNpc(){return NPCD.find(n=>n.st&&Math.hypot(n.st.x-S.x,n.st.y-S.y)<55)}
+function relUp(n,a){S.rel=S.rel||{};const b=rlv(rp(n.id));S.rel[n.id]=rp(n.id)+a;const l=rlv(rp(n.id));if(l>b)toast('🎉 ความสัมพันธ์กับ '+n.nm.split(' ')[0]+' เป็น "'+RLN[l]+'" แล้ว!')}
+function talkNpc(n){S.rt=S.rt||{};const nm=n.nm.split(' ')[0];if(S.rt[n.id]===S.d){toast(nm+': วันนี้เราคุยกันแล้วนะ พรุ่งนี้ค่อยคุยใหม่');return}S.rt[n.id]=S.d;const a=3+Math.floor(Math.random()*4),ls=NL[rlv(rp(n.id))];n.st.say=ls[Math.floor(Math.random()*ls.length)];n.st.sat=Date.now();relUp(n,a);ch({m:4});adv(.3);sfx('coop');toast('💬 คุยกับ '+nm+' ความสนิท +'+a);lastZ='~'}
+function giftNpc(n,price){if(S.$<price){toast('เงินไม่พอ');return}S.$-=price;const a=Math.min(30,Math.round(4+Math.sqrt(price)*.9));n.st.say='ขอบคุณมาก! 💖';n.st.sat=Date.now();relUp(n,a);ch({m:3});sfx('coin');toast('🎁 ให้ของขวัญ '+n.nm.split(' ')[0]+' ความสนิท +'+a);lastZ='~'}
+function dineNpc(n){if(S.$<120){toast('เงินไม่พอ');return}S.$-=120;relUp(n,8);ch({h:30,m:3});adv(1);sfx('eat');toast('🍜 ชวน '+n.nm.split(' ')[0]+' กินข้าว ความสนิท +8');lastZ='~'}
+function payBonus(){let b=0;NPCD.forEach(n=>{if(n.pf==='p'){const lv=rlv(rp(n.id));if(lv>=2)b+=.03*lv}});return b}
+function petTick(){const H2=S.d*24+S.t;if(S.ph==null)S.ph=H2;const dh=H2-S.ph;if(dh<=0)return;S.ph=H2;(S.pets||[]).forEach(p=>{p.h=cl(p.h-2.2*dh);p.m=cl(p.m-(p.h<25?3:1)*dh)})}
+function dayHook(){let em=0,ee=0,gf=0;NPCD.forEach(n=>{const lv=rlv(rp(n.id));if(lv<2)return;if(n.pf==='m')em+=lv;if(n.pf==='e')ee+=lv*2;if(n.pf==='g'&&S.d%5===0)gf+=lv*lv*200*(n.id==='n11'?100:1);if(n.pf==='t'&&lv>=3){const i=Math.floor(Math.random()*STK.length),f=peek(30)[i]>=STK[i].p,up=Math.random()<.7?f:!f;setTimeout(()=>toast('📰 มายด์กระซิบ: '+STK[i].id+' น่าจะ '+(up?'▲ ขึ้น':'▼ ลง')+' ใน 30 วิ'),1500)}});
+(S.pets||[]).forEach(p=>{const t=PETT[p.t];if(p.h>20){em+=t.m;ee+=t.en;gf+=t.g}});if(em||ee||gf){S.m=cl(S.m+em);S.e=cl(S.e+ee);S.$+=gf;toast('☀ สิทธิพิเศษจากเพื่อนและสัตว์เลี้ยง: อารมณ์ +'+em+' พลังงาน +'+ee+(gf?' เงิน +฿'+nf(gf):''))}}
+function acts(){const z=zoneOf(S.x,S.y),near=peers.find(p=>!p.isMe&&p.presence&&Math.hypot(p.presence.x-S.x,p.presence.y-S.y)<70),npc=nearNpc();
+const key=z+'|'+(near&&near.peer)+'|'+(npc&&npc.id)+'|'+ended+'|'+(npc?(S.rt||{})[npc.id]:'');if(key===lastZ)return;lastZ=key;const box=$('acts');box.innerHTML='';if(ended)return;
+if(!z&&!npc)box.textContent='เดินไปที่สถานที่ต่าง ๆ (แตะที่แผนที่ หรือใช้ลูกศร/WASD)';
+const add=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.onclick=fn;box.appendChild(b)};
+(ACT[z]||[]).concat(z===CAR[S.job].z?[[CAR[S.job].a,workF]]:[]).forEach(([t,f])=>add(t,()=>{const t0=S.t+S.d*100,k=/ทำงาน|ชงกาแฟ|ฟรีแลนซ์|เวร|สอนเทรนนิ่ง|ดูแลห้องสมุด|ขายของ|สอนหนังสือ|ดูแลเครื่องเล่น|ดูแลสวน|ออกเรือ|วิเคราะห์หุ้น/.test(t)?'work':/กินข้าว|กินของ/.test(t)?'eat':/พักผ่อน|วิ่ง|ชิล|เล่นน้ำ|อ่านหนังสือ|ออกกำลัง|เดินป่า|ฟุตบอล|ตกปลา|เก็บผลไม้|สปา|เครื่องเล่น/.test(t)?'relax':'';f();hud();if(S.t+S.d*100!==t0){sfx(/นอน/.test(t)?'sleep':k==='work'?'coin':k==='eat'?'eat':'click');if(k)act(k)}}));
+if(npc){const nm=npc.nm.split(' ')[0];add('💬 คุยกับ '+nm,()=>{talkNpc(npc);hud()});add('🌹 ให้ดอกไม้ ฿80',()=>{giftNpc(npc,80);hud()});add('🎁 ให้ของขวัญ ฿500',()=>{giftNpc(npc,500);hud()});add('🍜 ชวนกินข้าว ฿120',()=>{dineNpc(npc);hud()})}
+if(near)add('💬 คุยกับ '+(near.presence.n||'เพื่อน'),()=>{ch({m:8});adv(.5);toast('คุยกันสนุกมาก +อารมณ์');hud()})}
+ACT.petshop=[['🐾 รับเลี้ยงสัตว์',open(10,20,()=>{PT='adopt';PADOPT=true;PMSG='';showPn()})]];
+function showPn(){const el=$('pn');S.rel=S.rel||{};S.pets=S.pets||[];
+let h=`<div class=tp><div class=mt>${[['rel','💞 ความสัมพันธ์'],['pet','🐾 สัตว์เลี้ยง ('+S.pets.length+'/3)'],['adopt','🛍 รับเลี้ยง']].map(t=>`<button class='${PT===t[0]?'gb on':'ob'}' data-pt=${t[0]}>${t[1]}</button>`).join('')}</div><span class=sm style=color:#fff>💰฿${nf(S.$)}</span><button id=px class=rb>✕ ปิด</button></div>`;
+if(PMSG)h+=`<div class=sm style='color:#e8a33d;margin-bottom:4px'>${esc(PMSG)}</div>`;h+='<div class=w>';
+if(PT==='rel')NPCD.forEach(n=>{const p=rp(n.id),lv=rlv(p),nx=[10,30,60,100,100][lv],pv=[0,10,30,60,100][lv],pct=lv>=4?100:Math.round((p-pv)/(nx-pv)*100);h+=`<div class=card><b>${n.em} ${esc(n.nm)}</b> <span class=sm>· ${RLN[lv]}</span><div class=sm>${esc(n.rl)} · ขณะนี้อยู่ที่ ${esc((Z[npcZone(n)]||{}).n||'-')}</div><div class=bar><b style=width:${pct}%></b></div><div class=sm>💗 ${p} แต้ม · สิทธิพิเศษ: ${esc(n.pd)}${lv<2?' (ปลดล็อกที่ระดับเพื่อน)':' ✅'}</div></div>`});
+else if(PT==='pet'){if(!S.pets.length)h+='<div class=card><div class=sm>ยังไม่มีสัตว์เลี้ยง ไปที่ร้านสัตว์เลี้ยงเพื่อรับเลี้ยง</div></div>';S.pets.forEach((p,i)=>{const t=PETT[p.t];h+=`<div class=card><b>${t.e} ${esc(p.n)}</b> <span class=sm>(${t.n}) · สนิท ${p.b|0}</span><div class=sm>อิ่ม ${Math.round(p.h)}</div><div class=bar><b style=width:${p.h}%></b></div><div class=sm>อารมณ์ ${Math.round(p.m)}</div><div class=bar><b style=width:${p.m}%></b></div><div style='display:flex;gap:6px;flex-wrap:wrap;margin-top:6px'><button class=gb data-pf=${i}>🍖 ให้อาหาร ฿30</button><button class=ob data-pp=${i}>🎾 เล่นด้วย</button></div><input id=prn${i} maxlength=10 placeholder='เปลี่ยนชื่อ'><button class=ob data-pr=${i}>เปลี่ยนชื่อ</button><div class=sm>สิทธิพิเศษ: ${esc(t.d)}${p.h<=20?' (หิวเกินไป ไม่ได้ผล)':''}</div></div>`})}
+else{h+=`<div class=card style='grid-column:1/-1'><div class=sm>ตั้งชื่อสัตว์เลี้ยง (ไม่ใส่ = ใช้ชื่อพันธุ์)</div><input id=pnm maxlength=10 placeholder='ชื่อสัตว์เลี้ยง'></div>`;if(!PADOPT)h+='<div class=card><div class=sm>ไปที่ร้านสัตว์เลี้ยง (แถวล่าง ทางขวาของแผนที่) เพื่อรับเลี้ยง</div></div>';else Object.keys(PETT).forEach(k=>{const t=PETT[k];h+=`<div class=card><b>${t.e} ${t.n}</b> <span class=sm>฿${nf(t.p)}</span><div class=sm>${esc(t.d)}</div><button class=gb data-ad=${k}>รับเลี้ยง</button></div>`})}
+h+='</div>';el.innerHTML=h;el.hidden=false}
+$('pn').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;if(b.id==='px'){$('pn').hidden=true;return}
+if(d.pt){PT=d.pt}else if(d.pf!==undefined){const p=S.pets[+d.pf];if(S.$<30)PMSG='เงินไม่พอ';else{S.$-=30;p.h=cl(p.h+40);p.m=cl(p.m+3);p.b=(p.b||0)+1;PMSG='ให้อาหาร '+p.n+' แล้ว';sfx('eat')}}
+else if(d.pp!==undefined){const p=S.pets[+d.pp];p.m=cl(p.m+15);p.b=(p.b||0)+2;p.h=cl(p.h-3);ch({m:3});adv(.5);PMSG='เล่นกับ '+p.n+' สนุกมาก (อารมณ์คุณ +3)';sfx('coop')}
+else if(d.pr!==undefined){const v=($('prn'+d.pr).value||'').trim();if(v){S.pets[+d.pr].n=v.slice(0,10);PMSG='เปลี่ยนชื่อแล้ว'}}
+else if(d.ad){const t=PETT[d.ad],nm=(($('pnm')&&$('pnm').value)||'').trim()||t.n;if(S.pets.length>=3)PMSG='เลี้ยงได้สูงสุด 3 ตัว';else if(S.$<t.p)PMSG='เงินไม่พอ (ต้องการ ฿'+nf(t.p)+')';else{S.$-=t.p;S.pets.push({t:d.ad,n:nm.slice(0,10),h:80,m:80,b:0});PMSG='รับเลี้ยง '+t.e+' '+nm+' แล้ว! 🎉';PT='pet';sfx('coin')}}
+hud();showPn()};
+$('relb').onclick=()=>{PT='rel';PADOPT=false;PMSG='';showPn()};$('petb').onclick=()=>{PT='pet';PADOPT=false;PMSG='';showPn()};
+function pub(){if(R)R.presence({n:name,x:Math.round(S.x),y:Math.round(S.y),c:col,say:S.say||"",st:S.st||0,d:Math.min(S.d,150),ak:LA.k,an:AN,cr:S.car||0,ot:otArr(),sc:S.sc||0,fm:S.fm||0,fo:S.fo||0}).catch(()=>{})}
+function send(){const v=$("chat").value.trim();if(!v)return;if(isDev(v)){$("chat").value="";setDev(true);return}S.say=v;S.st=Date.now();$("chat").value="";pub()}
+$("fs").onclick=async()=>{const d=document,b=d.body;try{if(d.fullscreenElement){await d.exitFullscreen();b.classList.remove("fs");return}
+if(b.classList.contains("fs")){b.classList.remove("fs");return}
+await d.documentElement.requestFullscreen();b.classList.add("fs");try{await screen.orientation.lock("landscape")}catch(e){}}
+catch(e){b.classList.add("fs");toast("เข้าโหมดเต็มหน้าจอ (เบราว์เซอร์นี้ไม่รองรับเต็มจอจริง) กดปุ่มอีกครั้งเพื่อออก")}};
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement)document.body.classList.remove("fs")});
+$("send").onclick=send;$("chat").onkeydown=e=>{if(e.key=="Enter")send()};
+$("go").onclick=async()=>{try{if(!RES&&slotGet(SLOT)&&!confirm("ช่อง "+SLOT+" มีเซฟอยู่ จะเขียนทับด้วยเกมใหม่ไหม?"))return}catch(e){}name=$("nm").value.trim()||"ผู้เล่น";const code=$("rm").value.trim().toLowerCase().replace(/[^a-z0-9ก-๙_-]/g,"");
+CODE=code;if(isDev($('dv').value)||devSaved())setDev(true);if(!RES){S.job=$('jb').value;S.x=145;S.y=203}S.job=S.job||'office';aud();setInterval(save,5000);$("start").hidden=true;$("game").hidden=false;hud();
+setInterval(step,1000/60);setInterval(()=>{if(!ended){adv(.003);hud();ST.ms+=S.m;ST.mn++}},100);setInterval(pub,250);
+$("who").textContent=code?"กำลังเชื่อมต่อห้อง “"+code+"”...":"โหมดเล่นคนเดียว";
+if(code&&window.claude&&claude.use){try{const room=await claude.use("room");if(!room)throw 0;R=await room.join("life-"+code);
+R.onPeers(c=>{peers=[...c.peers];seen();if(ended&&!$('sum').hidden&&!window._st)window._st=setTimeout(()=>{window._st=0;showSum()},1000);$("who").textContent="🔑 รหัสห้อง "+code+" · ผู้เล่นในห้อง "+peers.length+" คน";lastZ="~"});pub()}
+catch(e){R=null;$("who").textContent="เชื่อมต่อห้องไม่ได้"+(e&&e.code?" ["+e.code+"]":"")+" — ตรวจสอบอินเทอร์เน็ต ปิด VPN/ตัวบล็อกโฆษณา แล้วรีเฟรชลองใหม่ (ตอนนี้เล่นคนเดียวไปก่อน)"}}}
+</script></body></html>
